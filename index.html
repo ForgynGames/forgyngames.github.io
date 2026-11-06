@@ -141,8 +141,9 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .shelf {
   list-style: none; margin: 0; height: 100%; padding: 0 22px;
   display: flex; align-items: flex-end; gap: 0 22px; overflow: hidden;
-  background: linear-gradient(to bottom, transparent calc(100% - 24px), var(--maple) calc(100% - 24px) calc(100% - 6px), var(--maple-edge) calc(100% - 6px));
-  border-radius: 4px; box-shadow: 0 18px 16px -14px rgb(0 0 0 / .55);
+  /* the plank: its lit top face seen from just above, its front, and its dark edge */
+  background: linear-gradient(to bottom, transparent calc(100% - 31px), #e0b680 calc(100% - 31px) calc(100% - 24px), var(--maple) calc(100% - 24px) calc(100% - 6px), var(--maple-edge) calc(100% - 6px));
+  border-radius: 4px; box-shadow: 0 20px 18px -14px rgb(0 0 0 / .6);
 }
 @media (max-width: 760px) and (min-height: 501px) { .shelf { padding-right: calc(var(--ezra-w) - 6px); } } /* nothing stands behind Ezra */
 /* A short aisle (a phone on its side) has no height to spare: the sign stands at the left end of the shelf instead */
@@ -153,7 +154,12 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
   .rack { --box-h: clamp(80px, calc(100cqh - 56px), 400px); }
   .shelf { padding-left: 46px; }
 } }
-.item { flex: none; display: flex; flex-direction: column; justify-content: flex-end; perspective: 900px; }
+.item { position: relative; flex: none; display: flex; flex-direction: column; justify-content: flex-end; perspective: 900px; }
+/* Each box sits on the plank: a soft shadow where it meets the wood, falling right like the store lights */
+.item::before, .spine-slot::before {
+  content: ""; position: absolute; left: 10%; right: -16%; bottom: 17px; height: 16px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgb(48 26 8 / .62), transparent);
+}
 /* An empty aisle still has its shelf, with a coming-soon box on it */
 .placeholder img { display: block; height: var(--box-h); width: auto; filter: drop-shadow(6px 10px 10px rgb(0 0 0 / .4)); }
 .placeholder .tag { justify-content: center; font: 800 .9rem/1 var(--f-cond); color: var(--ink); }
@@ -219,7 +225,7 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .starburst span { position: relative; }
 
 /* When the row is full, older titles stand spine-out at its end, like a crowded video store */
-.spine-slot { flex: none; padding-bottom: 24px; margin-left: var(--spine-step, -19px); } /* spines stand close together */
+.spine-slot { position: relative; flex: none; padding-bottom: 24px; margin-left: var(--spine-step, -19px); } /* spines stand close together */
 .spine-slot:first-child { margin-left: 0; } /* the row starts under its sign */
 .spine { /* a strip of the title's own box art, with its name, like a game on a crowded shelf */
   --band: var(--game); position: relative; display: block; height: calc(var(--box-h) * .97); width: var(--spine-w, 38px); padding: 32px 0 22px;
