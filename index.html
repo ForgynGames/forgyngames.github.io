@@ -41,13 +41,17 @@
   --f-led: "VT323", ui-monospace, Menlo, monospace;
   --led: #9be15d;
   --hard: 6px 6px 0 rgb(0 0 0 / .35);
-  --ezra-w: 230px;
+  --store-w: 1680px; /* the store's width on a big screen */
+  --ezra-w: clamp(150px, min(16vw, 28vh), 260px); /* Ezra grows with the screen */
+  --ezra-right: max(12px, env(safe-area-inset-right), calc((100vw - var(--store-w)) / 2 + 16px)); /* behind his counter, at the store's edge */
   --ezra-h: calc(var(--ezra-w) * 452 / 460);
-  --bubble-bottom: 236px;
-  --tail: 111px;
+  --bubble-bottom: calc(var(--ezra-w) * .98 + 10px); /* his speech bubble starts just above his head */
+  --tail: calc(var(--ezra-w) * .53 - 11px); /* and points at his mouth */
   color-scheme: light;
 }
-@media (max-width: 760px) { :root { --ezra-w: 128px; --bubble-bottom: 136px; --tail: 57px; } }
+/* On a phone he stands in the thumb's corner: always a big target, never over the boxes */
+@media (max-width: 760px) and (min-height: 501px) { :root { --ezra-w: clamp(116px, 32vw, 150px); } }
+@media (max-height: 500px) { :root { --ezra-w: clamp(96px, 28vh, 120px); } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 /* One screen, no scrolling: the store sizes itself to the window. Racks page sideways; windows scroll inside themselves. */
@@ -71,7 +75,7 @@ button { font: inherit; }
 /* The store sign */
 header { flex: none; padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); }
 .sign {
-  max-width: 1400px; margin: 0 auto; padding: 12px 20px;
+  max-width: var(--store-w); margin: 0 auto; padding: 12px 20px;
   background: var(--plate); border: 5px solid var(--ink); border-radius: 10px;
   box-shadow: 0 0 0 4px var(--plate), 0 14px 24px rgb(0 0 0 / .4);
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px;
@@ -81,7 +85,7 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .tagline { margin: 0; font: 700 1.05rem/1.2 var(--f-cond); letter-spacing: .03em; }
 .summary { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
 .sign-side { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 500px) {
   .sign { padding: 8px 12px; gap: 6px 12px; }
   .sign-text, #to-store, #waiting { display: none; } /* Ezra's "!" says what's waiting */
   .waiting { padding: 7px 9px 6px; font-size: .75rem; }
@@ -94,6 +98,8 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .open-sign { /* "Come in, we're OPEN", painted on the store's sign */
   margin: 0; rotate: -3deg; text-align: center; color: var(--game); font: 400 1.6rem/1 var(--f-sign);
 }
+.itch { font: 700 .95rem/1 var(--f-cond); color: var(--ink); text-underline-offset: 3px; padding: 12px 4px; } /* the store's other door, set by publishing when it exists */
+.itch:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
 .open-sign small { display: block; margin-bottom: 3px; font: 700 .7rem/1 var(--f-cond); letter-spacing: .04em; color: var(--muted); text-transform: uppercase; }
 .lamp { /* the dev view's back-room light */
   display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px 7px; border: 3px solid var(--ink); border-radius: 7px; cursor: pointer;
@@ -104,37 +110,49 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 
 /* The floor: aisles on the left, the counter on the right with the demo TV above Ezra's register */
 .floor {
-  flex: 1; min-height: 0; width: 100%; max-width: 1400px; margin: 0 auto;
+  flex: 1; min-height: 0; width: 100%; max-width: var(--store-w); margin: 0 auto;
   display: grid; grid-template-columns: minmax(0, 1fr) clamp(290px, 30vw, 430px); gap: 0 24px;
   padding: 10px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
 }
-#store { grid-column: 1; grid-row: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
-@media (max-width: 760px) {
+#store { grid-column: 1; grid-row: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; } /* aisles stand apart; each sign hugs its own shelf */
+@media (max-width: 760px) and (min-height: 501px) {
   .floor { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 8px; padding: 8px 12px 10px; }
   #store { grid-row: 2; }
 }
 /* Aisles: each is one rack that fills its share of the floor and pages sideways */
-.aisle { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; container-type: size; }
+.aisle { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; container-type: size; } /* spare height goes above the sign, never between it and its shelf */
 .aisle::before { /* the ceiling light over each aisle */
   content: ""; position: absolute; inset: -30px 0 auto; height: 70%; pointer-events: none;
   background: radial-gradient(ellipse 42% 40% at 50% 40%, rgb(255 246 214 / .12), transparent);
 }
-.aisle-sign { flex: none; display: flex; justify-content: center; position: relative; padding-top: 16px; margin-bottom: 2px; }
-.aisle-sign::before, .aisle-sign::after { content: ""; position: absolute; top: 0; height: 18px; width: 3px; background: repeating-linear-gradient(to bottom, #8a8375 0 4px, transparent 4px 6px); }
-.aisle-sign::before { left: calc(50% - 58px); } .aisle-sign::after { left: calc(50% + 56px); }
+/* The aisle sign: a small enamel sign like the store's own, hanging just above the left end of its shelf, where the row starts */
+.aisle-sign { flex: none; display: flex; position: relative; z-index: 1; padding: 18px 0 0 22px; margin-bottom: -16px; } /* hangs over the rack's hover headroom, just above its own boxes */
 .aisle-sign h2 {
-  margin: 0; min-width: 150px; text-align: center; font: 400 1.05rem/1 var(--f-sign);
-  padding: 7px 14px 6px; border-radius: 6px; color: #fff; border: 3px solid var(--ink); box-shadow: 0 5px 10px rgb(0 0 0 / .3);
+  position: relative; margin: 0; min-width: 120px; text-align: center; font: 400 clamp(1.05rem, 2vh, 1.45rem)/1 var(--f-sign); color: var(--aisle);
+  padding: 6px 14px 5px; background: var(--plate); border: 3px solid var(--ink); border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--plate), 0 8px 12px rgb(0 0 0 / .35);
 }
-.aisle.game h2 { background: var(--game); } .aisle.web h2 { background: var(--site); }
-.rack { position: relative; flex: 1; min-height: 0; --box-h: clamp(96px, calc(100cqh - 100px), 330px); }
+.aisle-sign h2::before, .aisle-sign h2::after { /* the chains it hangs from */
+  content: ""; position: absolute; bottom: calc(100% + 5px); height: 18px; width: 3px; background: repeating-linear-gradient(to bottom, #8a8375 0 4px, transparent 4px 6px);
+}
+.aisle-sign h2::before { left: 14px; } .aisle-sign h2::after { right: 14px; }
+.aisle.game h2 { --aisle: var(--game); } .aisle.web h2 { --aisle: var(--site); }
+.rack { position: relative; flex: 1; min-height: 0; max-height: calc(var(--box-h) + 52px); --box-h: clamp(96px, calc(100cqh - 100px), max(400px, 36vh)); }
 .shelf {
   list-style: none; margin: 0; height: 100%; padding: 0 22px;
   display: flex; align-items: flex-end; gap: 0 22px; overflow: hidden;
   background: linear-gradient(to bottom, transparent calc(100% - 24px), var(--maple) calc(100% - 24px) calc(100% - 6px), var(--maple-edge) calc(100% - 6px));
   border-radius: 4px; box-shadow: 0 18px 16px -14px rgb(0 0 0 / .55);
 }
-@media (max-width: 760px) { .shelf { padding-right: calc(var(--ezra-w) - 6px); } } /* nothing stands behind Ezra */
+@media (max-width: 760px) and (min-height: 501px) { .shelf { padding-right: calc(var(--ezra-w) - 6px); } } /* nothing stands behind Ezra */
+/* A short aisle (a phone on its side) has no height to spare: the sign stands at the left end of the shelf instead */
+@media (orientation: landscape) { @container (max-height: 210px) {
+  .aisle-sign { position: absolute; inset: 0 auto 30px 0; padding: 0; margin: 0; align-items: flex-end; }
+  .aisle-sign h2 { writing-mode: vertical-rl; rotate: 180deg; min-width: 0; padding: 12px 5px 12px 4px; font-size: .9rem; }
+  .aisle-sign h2::before, .aisle-sign h2::after { display: none; }
+  .rack { --box-h: clamp(80px, calc(100cqh - 56px), 400px); }
+  .shelf { padding-left: 46px; }
+} }
 .item { flex: none; display: flex; flex-direction: column; justify-content: flex-end; perspective: 900px; }
 /* An empty aisle still has its shelf, with a coming-soon box on it */
 .placeholder img { display: block; height: var(--box-h); width: auto; filter: drop-shadow(6px 10px 10px rgb(0 0 0 / .4)); }
@@ -202,6 +220,7 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 
 /* When the row is full, older titles stand spine-out at its end, like a crowded video store */
 .spine-slot { flex: none; padding-bottom: 24px; margin-left: var(--spine-step, -19px); } /* spines stand close together */
+.spine-slot:first-child { margin-left: 0; } /* the row starts under its sign */
 .spine { /* a strip of the title's own box art, with its name, like a game on a crowded shelf */
   --band: var(--game); position: relative; display: block; height: calc(var(--box-h) * .97); width: var(--spine-w, 38px); padding: 32px 0 22px;
   border: 0; border-radius: 2px; cursor: pointer; color: #fff;
@@ -284,7 +303,17 @@ button.glass { cursor: pointer; }
 .demo-caption .hint { margin: 10px 0 0; font-size: .82rem; color: rgb(244 236 214 / .62); }
 @media (max-height: 860px) { .demo-caption .hint { display: none; } }
 @media (max-height: 760px) { .demo-caption #demo-pitch { -webkit-line-clamp: 2; } }
-@media (max-width: 760px) {
+/* A phone on its side: the TV fills the counter above Ezra, and its caption stands beside him */
+@media (max-height: 500px) {
+  .floor { grid-template-columns: minmax(0, 1fr) clamp(240px, 32vw, 330px); padding-block: 6px 8px; }
+  .demo { padding-bottom: 0; }
+  .demo-set { gap: 6px; }
+  .tv-slot { min-height: 0; margin-bottom: 34px; } /* room for his "!" */
+  .demo-caption { height: var(--ezra-h); width: calc(100% - var(--ezra-w) - 10px); display: flex; flex-direction: column; justify-content: flex-end; }
+  .demo-caption .ch, .demo-caption #demo-pitch, .demo-caption .hint { display: none; }
+  .demo-caption h2 { font-size: 1.05rem; }
+}
+@media (max-width: 760px) and (min-height: 501px) {
   .demo { grid-column: 1; grid-row: 1; padding-bottom: 0; }
   .demo-set { flex-direction: row; align-items: center; }
   .tv-slot { flex: none; width: 46%; min-height: 0; aspect-ratio: 880 / 684; }
@@ -321,7 +350,7 @@ button.glass { cursor: pointer; }
 .tv-bar .hint { width: 100%; margin: 0; font-size: .85rem; color: var(--muted); }
 /* Holding a box: it comes off the shelf to you; drag it, or use Turn it over, to read the back */
 .hold-stage { display: grid; grid-template-columns: auto minmax(0, 380px); gap: 40px; align-items: center; max-height: 100%; }
-@media (max-width: 760px) { .hold-stage { grid-template-columns: 1fr; justify-items: center; gap: 22px; overflow: auto; padding-bottom: 12px; } }
+@media (max-width: 760px) and (min-height: 501px) { .hold-stage { grid-template-columns: 1fr; justify-items: center; gap: 22px; overflow: auto; padding-bottom: 12px; } }
 .held { position: relative; width: min(440px, 86vw, 60dvh); aspect-ratio: 5 / 7; transform-style: preserve-3d; cursor: grab; touch-action: pan-y; user-select: none; }
 .held:active { cursor: grabbing; }
 .held .face { box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 18px 26px 34px rgb(0 0 0 / .5); }
@@ -366,7 +395,7 @@ button.glass { cursor: pointer; }
 
 /* Ezra, the clerk behind the register: the way in to everything the factory does */
 .ezra {
-  position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: 0; z-index: 14; width: var(--ezra-w);
+  position: fixed; right: var(--ezra-right); bottom: 0; z-index: 14; width: var(--ezra-w);
   padding: 0; border: 0; background: none; color: var(--plate); cursor: pointer;
 }
 .ezra { display: grid; }
@@ -392,12 +421,18 @@ button.glass { cursor: pointer; }
   .ezra[data-state="waiting"] .ezra-alert, .ezra[data-state="busy"] .ezra-alert { animation: bob 1.2s ease-in-out infinite; }
 }
 @keyframes wave { 0% { visibility: visible; } 60% { visibility: hidden; } }
+/* While his bubble is open he's talking with you: mouth open, hands on the counter. He waves hi as it opens, and when you point at him. */
+.ezra .f-talk { visibility: hidden; }
+.ezra.talking .f-idle, .ezra.talking .f-wave, .ezra.talking .f-busy { visibility: hidden; animation: none; }
+.ezra.talking .f-talk { visibility: visible; }
+.ezra.talking.hi .f-wave, .ezra.talking:is(:hover, :focus-visible) .f-wave { visibility: visible; }
+.ezra.talking.hi .f-talk, .ezra.talking:is(:hover, :focus-visible) .f-talk { visibility: hidden; }
 @keyframes rest { 0% { visibility: hidden; } 60% { visibility: visible; } }
 @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
 
 /* His speech bubble: questions, conversations and the back room */
 .counter {
-  position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: var(--bubble-bottom); z-index: 15;
+  position: fixed; right: var(--ezra-right); bottom: var(--bubble-bottom); z-index: 15;
   width: min(440px, calc(100vw - 24px)); height: min(620px, calc(100dvh - var(--bubble-bottom) - 40px));
   display: flex; flex-direction: column; background: var(--plate); border: 4px solid var(--ink); border-radius: 18px;
   box-shadow: inset 0 0 0 3px #fffaf0, 8px 8px 0 rgb(0 0 0 / .38); transform-origin: calc(100% - var(--tail)) 100%;
@@ -478,7 +513,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
 .composer { display: grid; gap: 8px; position: sticky; bottom: -18px; padding: 10px 0 0; background: var(--plate); }
 .composer-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .toast { /* Ezra's quick lines, in a small bubble over his head */
-  position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: var(--bubble-bottom); z-index: 30;
+  position: fixed; right: var(--ezra-right); bottom: var(--bubble-bottom); z-index: 30;
   min-width: 210px; max-width: min(320px, calc(100vw - 24px)); padding: 12px 14px; border: 3px solid var(--ink); border-radius: 14px;
   background: var(--plate); color: var(--ink); font: 700 1.02rem/1.25 var(--f-cond); box-shadow: var(--hard);
 }
@@ -515,6 +550,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
       <a class="waiting" id="waiting" href="https://github.com/warfare-hub/factory/issues?q=is%3Aopen+label%3Aneeds-you" hidden></a>
       <button type="button" class="lamp" id="lamp" hidden>Back room</button>
       <p class="open-sign" id="open-sign" hidden><small>Come in, we're</small>Open</p>
+      <a class="itch" id="itch" href="https://forgyngames.itch.io/" target="_blank" rel="noopener">Also on itch.io</a>
     </div>
   </div>
 </header>
@@ -582,6 +618,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
   <img class="f-idle" src="art/ezra-1.webp" alt="" width="460" height="452">
   <img class="f-wave" src="art/ezra-2.webp" alt="" width="460" height="452">
   <img class="f-busy" src="art/ezra-3.webp" alt="" width="460" height="452">
+  <img class="f-talk" src="art/ezra-4.webp" alt="" width="460" height="452">
 </button>
 <aside class="counter" id="counter" hidden aria-labelledby="counter-title">
   <div class="counter-head">
@@ -795,6 +832,15 @@ function fill(shelf, items) {
 }
 let refit;
 addEventListener('resize', () => { stopReading(); clearTimeout(refit); refit = setTimeout(() => render('resize'), 150); });
+// The aisles can change size without the window changing (fonts arriving, the sign rewrapping): refit the rows then too.
+let storeSize = '';
+new ResizeObserver(([e]) => {
+  const size = `${Math.round(e.contentRect.width)}x${Math.round(e.contentRect.height)}`;
+  if (size === storeSize) return;
+  const first = !storeSize;
+  storeSize = size;
+  if (!first) { clearTimeout(refit); refit = setTimeout(() => render('resize'), 150); }
+}).observe($('#store'));
 
 function updateSign(first) {
   const n = data.items.length;
@@ -1401,10 +1447,15 @@ function openCounter(which = tab) {
   else renderGuest();
   if (counter.hidden) {
     counter.hidden = false;
+    ezra.classList.add('talking', 'hi'); // a wave hello as the bubble opens, then he talks
+    clearTimeout(hiTimer);
+    hiTimer = setTimeout(() => ezra.classList.remove('hi'), 1200);
     animate(counter, { opacity: [0, 1], scale: [0.85, 1], y: [20, 0] }, spring(380, 30));
   }
 }
+let hiTimer;
 async function closeCounter() {
+  ezra.classList.remove('talking', 'hi');
   await animate(counter, { opacity: [1, 0], scale: [1, 0.9], y: [0, 14] }, { duration: 0.18 });
   counter.hidden = true;
 }
