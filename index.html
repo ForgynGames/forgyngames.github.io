@@ -80,19 +80,23 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 @media (max-width: 760px) {
   .sign { padding: 8px 12px; gap: 6px 12px; }
   .sign-text, #to-store, #waiting { display: none; } /* Ezra's "!" says what's waiting */
-  .waiting, .aisles button { padding: 7px 9px 6px; font-size: .75rem; }
+  .waiting { padding: 7px 9px 6px; font-size: .75rem; }
 }
 .waiting {
   font: 400 .9rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 7px;
   background: var(--game); color: #fff; text-decoration: none; box-shadow: 0 4px 0 var(--ink);
 }
-.waiting:focus-visible, .aisles button:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
-.aisles { display: flex; flex-wrap: wrap; gap: 8px; }
-.aisles button {
-  font: 400 .85rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 7px;
-  background: var(--plate); color: var(--ink); cursor: pointer; box-shadow: 0 4px 0 var(--ink); transition: translate .08s, box-shadow .08s;
+.waiting:focus-visible, .lamp:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
+.open-sign { /* "Come in, we're OPEN", painted on the store's sign */
+  margin: 0; rotate: -3deg; text-align: center; color: var(--game); font: 400 1.6rem/1 var(--f-sign);
 }
-.aisles button[aria-pressed="true"] { background: var(--ink); color: var(--plate); translate: 0 3px; box-shadow: 0 1px 0 var(--ink); }
+.open-sign small { display: block; margin-bottom: 3px; font: 700 .7rem/1 var(--f-cond); letter-spacing: .04em; color: var(--muted); text-transform: uppercase; }
+.lamp { /* the dev view's back-room light */
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px 7px; border: 3px solid var(--ink); border-radius: 7px; cursor: pointer;
+  background: var(--ink); color: var(--led); font: 400 1.05rem/1 var(--f-led); box-shadow: 0 4px 0 #000;
+}
+.lamp::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--led); }
+.lamp.warn { color: var(--fix); } .lamp.warn::before { background: var(--fix); }
 
 /* The floor: aisles on the left, the counter on the right with the demo TV above Ezra's register */
 .floor {
@@ -122,24 +126,15 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .rack { position: relative; flex: 1; min-height: 0; --box-h: clamp(96px, calc(100cqh - 100px), 330px); }
 .shelf {
   list-style: none; margin: 0; height: 100%; padding: 0 22px;
-  display: flex; align-items: flex-end; gap: 0 22px; overflow-x: auto; overflow-y: hidden;
-  scroll-snap-type: x proximity; scroll-padding: 0 22px; scrollbar-width: none; overscroll-behavior-x: contain;
+  display: flex; align-items: flex-end; gap: 0 22px; overflow: hidden;
   background: linear-gradient(to bottom, transparent calc(100% - 24px), var(--maple) calc(100% - 24px) calc(100% - 6px), var(--maple-edge) calc(100% - 6px));
   border-radius: 4px; box-shadow: 0 18px 16px -14px rgb(0 0 0 / .55);
 }
-.shelf::-webkit-scrollbar { display: none; }
-@media (max-width: 760px) { .shelf { padding-right: calc(var(--ezra-w) - 6px); } } /* the last box can slide out from behind Ezra */
-.item { flex: none; display: flex; flex-direction: column; justify-content: flex-end; scroll-snap-align: start; perspective: 900px; }
-/* The ◀ ▶ buttons at the ends of a rack, when there's more along it */
-.rack-nav {
-  position: absolute; top: 38%; z-index: 3; width: 40px; height: 40px; display: grid; place-items: center; padding: 0 0 0 2px;
-  border: 3px solid var(--ink); border-radius: 50%; background: var(--plate); color: var(--ink); box-shadow: 0 4px 0 var(--ink);
-  font: 400 .9rem/1 var(--f-sign); cursor: pointer; transition: translate .08s, box-shadow .08s;
-}
-.rack-nav.prev { left: -4px; padding: 0 2px 0 0; } .rack-nav.next { right: -4px; }
-.rack-nav:active { translate: 0 3px; box-shadow: 0 1px 0 var(--ink); }
-.rack-nav:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
-@media (pointer: coarse) { .rack-nav { display: none; } } /* fingers swipe the rack */
+@media (max-width: 760px) { .shelf { padding-right: calc(var(--ezra-w) - 6px); } } /* nothing stands behind Ezra */
+.item { flex: none; display: flex; flex-direction: column; justify-content: flex-end; perspective: 900px; }
+/* An empty aisle still has its shelf, with a coming-soon box on it */
+.placeholder img { display: block; height: var(--box-h); width: auto; filter: drop-shadow(6px 10px 10px rgb(0 0 0 / .4)); }
+.placeholder .tag { justify-content: center; font: 800 .9rem/1 var(--f-cond); color: var(--ink); }
 
 /* The boxed copy: a real case with a front and a back. Hover turns it over; a click picks it up. */
 .case {
@@ -201,16 +196,27 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .starburst svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--fix); }
 .starburst span { position: relative; }
 
-/* Older titles stand spine-out at the end of the rack */
-.spine-slot { flex: none; padding-bottom: 24px; }
-.spine {
-  --band: var(--game); display: block; width: 38px; padding: 34px 0 10px; border: 0; border-radius: 2px; cursor: pointer; color: #fff;
-  background: linear-gradient(var(--band) 0 26px, var(--ink) 26px); box-shadow: inset 2px 0 0 rgb(255 255 255 / .16), 3px 6px 10px rgb(0 0 0 / .4);
-  writing-mode: vertical-rl; font: 800 1rem/1 var(--f-cond); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+/* When the row is full, older titles stand spine-out at its end, like a crowded video store */
+.spine-slot { flex: none; padding-bottom: 24px; margin-left: -19px; } /* spines stand close together */
+.spine { /* a strip of the title's own box art, with its name, like a game on a crowded shelf */
+  --band: var(--game); position: relative; display: block; height: calc(var(--box-h) * .97); width: var(--spine-w, 38px); padding: 32px 0 22px;
+  border: 0; border-radius: 2px; cursor: pointer; color: #fff;
+  background: linear-gradient(rgb(12 10 8 / .3), rgb(12 10 8 / .62)), var(--art, none) center / cover no-repeat, var(--ink);
+  box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), inset -2px 0 0 rgb(0 0 0 / .35), 3px 6px 10px rgb(0 0 0 / .4);
+  writing-mode: vertical-rl; font: 800 1rem/1 var(--f-cond); text-shadow: 0 1px 2px rgb(0 0 0 / .9);
+  text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: transform .2s cubic-bezier(.22, 1, .36, 1);
 }
 .spine.site { --band: var(--site); } .spine.app { --band: var(--app); }
-.spine:hover, .spine:focus-visible, .pad .spine:focus { transform: translateY(-8px); }
+.spine::before { /* the header band: what kind of title it is, like a console's name across the top */
+  content: attr(data-kind); position: absolute; inset: 0 0 auto; height: 22px; display: grid; place-items: center; writing-mode: horizontal-tb;
+  background: #121110; border-bottom: 3px solid var(--band); color: #fff; font: 400 .5rem/1 var(--f-sign); text-shadow: none;
+}
+.spine::after { /* the publisher's mark */
+  content: "FG"; position: absolute; inset: auto 0 6px; writing-mode: horizontal-tb; text-align: center; color: var(--band);
+  font: 400 .55rem/1 var(--f-sign); text-shadow: none;
+}
+.spine:hover, .spine:focus-visible, .pad .spine:focus { transform: translateY(-12px) rotate(-4deg); } /* pulled out to look */
 .spine:focus-visible, .pad .spine:focus { outline: 3px solid var(--fix); outline-offset: 2px; }
 /* Reading the back: the box you rest on comes up toward you, above everything, and stays on screen */
 .reader { position: fixed; z-index: 12; pointer-events: none; }
@@ -354,15 +360,6 @@ button.glass { cursor: pointer; }
 .close { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; }
 .close svg { width: 20px; height: 20px; }
 
-/* Empty shelves */
-.closed { max-width: 560px; margin: 46px auto 0; background: var(--plate); border: 4px solid var(--ink); border-radius: 10px; padding: 22px 24px; box-shadow: inset 0 0 0 3px #fffaf0, var(--hard);
-  display: grid; grid-template-columns: 1fr 120px; gap: 0 20px; align-items: center; }
-.closed > * { grid-column: 1; }
-.closed > img { grid-column: 2; grid-row: 1 / span 9; width: 100%; height: auto; rotate: 4deg; }
-@media (max-width: 520px) { .closed { grid-template-columns: 1fr 84px; } }
-.closed h2 { margin: 0; font: 400 1.5rem/1.1 var(--f-sign); color: var(--game); }
-.closed p { margin: 10px 0; color: var(--muted); }
-.closed code { display: block; margin: 6px 0; padding: 7px 9px; background: rgb(28 25 21 / .08); border-radius: 4px; font: .84rem/1.3 ui-monospace, Menlo, monospace; color: var(--ink); }
 /* Ezra, the clerk behind the register: the way in to everything the factory does */
 .ezra {
   position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: 0; z-index: 14; width: var(--ezra-w);
@@ -512,11 +509,8 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
     <div class="sign-side">
       <a class="btn small" id="to-store" href="https://forgyngames.github.io" target="_blank" rel="noopener" hidden>Open the store ↗</a>
       <a class="waiting" id="waiting" href="https://github.com/warfare-hub/factory/issues?q=is%3Aopen+label%3Aneeds-you" hidden></a>
-      <nav class="aisles" aria-label="Aisles">
-        <button type="button" data-aisle="all" aria-pressed="true">All</button>
-        <button type="button" data-aisle="game" aria-pressed="false">Games</button>
-        <button type="button" data-aisle="web" aria-pressed="false">Web</button>
-      </nav>
+      <button type="button" class="lamp" id="lamp" hidden>Back room</button>
+      <p class="open-sign" id="open-sign" hidden><small>Come in, we're</small>Open</p>
     </div>
   </div>
 </header>
@@ -601,23 +595,6 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
 </aside>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<template id="closed">
-  <div class="closed">
-    <img src="art/coming-soon.webp" alt="" width="360" height="506">
-    <h2>Shelves get stocked soon</h2>
-    <p>Every build lands here after its check. Bring an idea to the Claude app and talk it through, or start one by hand:</p>
-    <code>npm run new moth-light game</code>
-    <code>npm run check moth-light</code>
-  </div>
-</template>
-<template id="soon">
-  <div class="closed">
-    <img src="art/coming-soon.webp" alt="" width="360" height="506">
-    <h2>New titles on the way</h2>
-    <p>Games and web apps from ForgynGames land here as they ship. Each one is a single file you can play right here or take home.</p>
-  </div>
-</template>
-
 <script src="motion.js"></script>
 <script>
 const M = window.Motion;
@@ -655,7 +632,6 @@ const short = (iso) => {
 let data = { mode: 'shelf', items: [] };
 let lineup = new Map(); // dev view only: where each product is on the production line
 let inbox = [];
-let aisle = 'all';
 let seen = null;
 let returnFocus = null;
 const store = () => data.mode === 'store';
@@ -720,22 +696,20 @@ function box(item) {
   return li;
 }
 
-let racks = [];
-addEventListener('resize', () => { racks.forEach((update) => update()); stopReading(); });
 
 // Resting the mouse on a box: it turns over and comes up toward you, big enough to read, above everything and on screen.
 const reader = el('div', { className: 'reader', hidden: true });
 reader.setAttribute('aria-hidden', 'true');
 document.body.append(reader);
-function readBack(item, from) {
+function readBack(item, from, side = 'back') {
   const r = from.getBoundingClientRect();
-  const k = 1.8;
-  const w = r.width * k;
+  const k = side === 'back' ? 1.8 : 1.35;
   const h = r.height * k;
+  const w = h * 5 / 7;
   const x = Math.min(innerWidth - w - 12, Math.max(12, r.left + r.width / 2 - w / 2));
   const y = Math.min(innerHeight - h - 12, Math.max(12, r.top + r.height / 2 - h / 2 - r.height * 0.3));
   reader.className = `reader ${item.kind}`;
-  reader.replaceChildren(backFace(item));
+  reader.replaceChildren(side === 'back' ? backFace(item) : frontFace(item));
   Object.assign(reader.style, { left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
   reader.hidden = false;
   animate(reader, { x: [r.left + r.width / 2 - (x + w / 2), 0], y: [r.top + r.height / 2 - (y + h / 2), 0], scale: [1 / k, 1], opacity: [0, 1] }, spring(380, 30));
@@ -744,11 +718,16 @@ function stopReading() { reader.hidden = true; }
 
 // Past the first eight in an aisle, older titles go spine out.
 const FACE_OUT = 8;
-function spine(item, i) {
+function spine(item) {
   const b = el('button', { type: 'button', className: `spine ${item.kind}` }, item.title);
-  b.style.height = `calc(var(--box-h) * ${0.86 + (i % 3) * 0.04})`;
+  b.dataset.kind = (LABEL[item.kind] ?? item.kind).toUpperCase();
+  b.style.setProperty('--art', `url("${art(item)}")`);
+
   b.setAttribute('aria-label', `${item.title}: pick it up`);
   b.addEventListener('click', () => pickUp(item, b));
+  let peekTimer;
+  b.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') peekTimer = setTimeout(() => readBack(item, b, 'front'), 260); });
+  b.addEventListener('pointerleave', () => { clearTimeout(peekTimer); stopReading(); });
   const li = el('li', { className: 'spine-slot' }, b);
   li.dataset.name = item.name;
   return li;
@@ -756,42 +735,17 @@ function spine(item, i) {
 
 function render(arrive) {
   const main = $('#store');
-  if (!data.items.length) {
-    main.replaceChildren($(store() ? '#soon' : '#closed').content.cloneNode(true));
-    return;
-  }
-  const aisles = AISLES.filter(([a]) => (aisle === 'all' || aisle === a) && data.items.some((i) => aisleOf(i.kind) === a));
-  racks = [];
-  main.replaceChildren(...aisles.map(([a, title]) => {
-    const all = data.items.filter((i) => aisleOf(i.kind) === a);
-    const shelf = el('ul', { className: 'shelf' }, ...all.slice(0, FACE_OUT).map(box), ...all.slice(FACE_OUT).map(spine));
+  // The same two aisles, always: one row each, newest face-out, the rest spine-out at the end.
+  main.replaceChildren(...AISLES.map(([a, title]) => {
+    const shelf = el('ul', { className: 'shelf' });
     shelf.setAttribute('aria-label', `${title} shelf`);
-    // A rack pages sideways: ◀ ▶ at its ends, the mouse wheel, a swipe or the arrow keys. The page itself never scrolls.
-    const nav = (dir, symbol, label) => {
-      const b = el('button', { type: 'button', className: `rack-nav ${dir < 0 ? 'prev' : 'next'}`, hidden: true }, symbol);
-      b.setAttribute('aria-label', label);
-      b.addEventListener('click', () => shelf.scrollBy({ left: dir * shelf.clientWidth * 0.8, behavior: calm ? 'auto' : 'smooth' }));
-      return b;
-    };
-    const prev = nav(-1, '◀', `Back along the ${title.toLowerCase()} shelf`);
-    const next = nav(1, '▶', `Further along the ${title.toLowerCase()} shelf`);
-    const update = () => {
-      prev.hidden = shelf.scrollLeft < 4;
-      next.hidden = shelf.scrollLeft + shelf.clientWidth > shelf.scrollWidth - 4;
-    };
-    shelf.addEventListener('scroll', () => { update(); stopReading(); }, { passive: true });
-    shelf.addEventListener('wheel', (e) => {
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || shelf.scrollWidth <= shelf.clientWidth) return;
-      e.preventDefault();
-      shelf.scrollLeft += e.deltaY;
-    }, { passive: false });
-    racks.push(update);
+    shelf.dataset.aisle = a;
     return el('section', { className: `aisle ${a}` }, el('div', { className: 'aisle-sign' }, el('h2', {}, title)),
-      el('div', { className: 'rack' }, shelf, prev, next));
+      el('div', { className: 'rack' }, shelf));
   }));
-  requestAnimationFrame(() => racks.forEach((update) => update()));
+  main.querySelectorAll('.shelf').forEach((shelf) => fill(shelf, data.items.filter((i) => aisleOf(i.kind) === shelf.dataset.aisle)));
 
-  const items = [...main.querySelectorAll('.item')];
+  const items = [...main.querySelectorAll('.item:not(.placeholder), .spine-slot')];
   const fresh = arrive === 'all' ? items : items.filter((li) => !seen?.has(li.dataset.name));
   if (fresh.length) {
     animate(fresh, { y: [-80, 0], opacity: [0, 1], rotate: [-4, 0] }, { ...spring(300, 20), delay: M?.stagger(0.045) });
@@ -802,8 +756,7 @@ function render(arrive) {
       if (call) animate(call, { rotate: [12, -10, 16, -4, 12] }, { duration: 0.8, delay: 0.6 });
     });
   }
-  if (!calm && M.hover) items.forEach((li) => {
-    const c = li.querySelector('.case');
+  if (!calm && M.hover) main.querySelectorAll('.case').forEach((c) => {
     M.hover(c, () => {
       animate(c, { y: -16, rotate: -1.8, scale: 1.05 }, spring(500, 22));
       return () => animate(c, { y: 0, rotate: 0, scale: 1 }, spring(420, 26));
@@ -811,6 +764,30 @@ function render(arrive) {
   });
   seen = new Set(data.items.map((i) => i.name));
 }
+// Fill one shelf: as many newest titles face-out as fit, the rest spine-out. If even the spines won't fit, they get thinner.
+function fill(shelf, items) {
+  if (!items.length) {
+    shelf.replaceChildren(el('li', { className: 'item placeholder' },
+      el('img', { src: 'art/coming-soon.webp', alt: 'Coming soon', width: 360, height: 506 }), el('p', { className: 'tag' }, 'Coming soon')));
+    return;
+  }
+  shelf.replaceChildren(...items.map(box));
+  const cs = getComputedStyle(shelf);
+  const room = shelf.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const boxW = shelf.querySelector('.case').getBoundingClientRect().width + parseFloat(cs.columnGap || 22);
+  const spineW = 41; // a 38px spine, standing 3px from its neighbour
+  let faceOut = items.length;
+  while (faceOut > 1 && faceOut * boxW + (items.length - faceOut) * spineW > room) faceOut--;
+  if (faceOut === items.length) return;
+  // On a narrow shelf, even one face-out box can leave no room for the spines: then it's spines all the way.
+  if ((room - boxW) / (items.length - 1) < 17) faceOut = 0;
+  shelf.replaceChildren(...items.slice(0, faceOut).map(box), ...items.slice(faceOut).map(spine));
+  const spare = room - faceOut * boxW;
+  const fits = Math.floor(spare / (items.length - faceOut));
+  if (fits < spineW) shelf.style.setProperty('--spine-w', `${Math.max(14, fits - 3)}px`);
+}
+let refit;
+addEventListener('resize', () => { stopReading(); clearTimeout(refit); refit = setTimeout(() => render('resize'), 150); });
 
 function updateSign(first) {
   const n = data.items.length;
@@ -819,8 +796,9 @@ function updateSign(first) {
   document.title = `${!store() && inbox.length ? `(${inbox.length}) ` : ''}${store() ? 'ForgynGames' : 'Shelf · Ezra Mini'}`;
   $('#mode').hidden = store();
   $('#to-store').hidden = store();
+  $('#open-sign').hidden = !store();
   const toFix = data.items.filter((i) => i.problems > 0).length;
-  $('#summary').textContent = !n ? (store() ? 'Opening soon' : 'Open 24/7 on the home network')
+  $('#summary').textContent = !n ? (store() ? 'Opening soon' : 'Open 24/7, just for you')
     : store() ? `${n} title${n > 1 ? 's' : ''} on the shelf`
     : `${n} in stock · ${toFix ? `${toFix} need fixing` : 'all checked'} · last check ${when(data.items[0].checkedAt)}`;
   const waiting = $('#waiting');
@@ -1027,9 +1005,19 @@ let demoImg;
 const demoItem = () => data.items[channel];
 function tune(n, quiet) {
   const items = data.items;
-  demo.hidden = !items.length;
-  if (!items.length) return;
+  demo.hidden = false;
+  $('#demo-play').hidden = !items.length;
+  if (!items.length) {
+    setPower(demoSet, false);
+    $('#demo-ch').textContent = 'CH -- · Off the air';
+    $('#demo-title').textContent = store() ? 'New titles on the way' : 'Shelves get stocked soon';
+    $('#demo-pitch').textContent = store() ? 'Games and web apps land here as they ship, each one a single file you can play right here.'
+      : 'Every build lands on the shelf after its check. Tell Ezra an idea to get one going.';
+    return;
+  }
   channel = (n + items.length) % items.length;
+  if (demoSet.dataset.switchedOff) return; // you turned it off: it stays off until you turn it on
+  if (!demoSet.classList.contains('on')) setPower(demoSet, true); // it was only off because the shelves were empty
   const item = items[channel];
   if (!quiet) retune(demoSet);
   if (!demoImg) $('#demo-screen .pic').append(demoImg = el('img', { alt: '' }));
@@ -1051,10 +1039,12 @@ function schedule() {
 async function demoPower() {
   if (demoSet.classList.contains('on')) {
     clearTimeout(demoTimer);
+    demoSet.dataset.switchedOff = 'yes';
     await powerOff(demoSet);
     $('#demo-ch').textContent = 'The TV is off';
   } else {
     hiss(320);
+    delete demoSet.dataset.switchedOff;
     await powerOn(demoSet);
     tune(channel, true);
     osd(demoSet, `CH ${chName(channel)}`);
@@ -1351,12 +1341,6 @@ addEventListener('gamepadconnected', () => {
   padLoop ??= requestAnimationFrame(pad);
 });
 addEventListener('mousedown', () => document.documentElement.classList.remove('pad'));
-
-document.querySelectorAll('.aisles button').forEach((button) => button.addEventListener('click', () => {
-  aisle = button.dataset.aisle;
-  document.querySelectorAll('.aisles button').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
-  render('all');
-}));
 
 // ── The counter: answer questions and talk with the factory. Only shown when the hub says this is Brandon. ──
 let hub = { allowed: false, sessions: [], questions: [] };
@@ -1733,6 +1717,17 @@ function renderGuest() {
   typeOut(line, GREETING[store() ? 'store' : 'shelf']);
 }
 // He waves with a "!" when something is waiting on Brandon, and looks down at the register while agents work.
+// The dev view's back-room light: green when everything the factory leans on is running and logged in.
+function lampFrom(st) {
+  const lamp = $('#lamp');
+  lamp.hidden = !st;
+  if (!st) return;
+  const days = st.login ? (Date.parse(st.login) - Date.now()) / 86400e3 : 0;
+  const good = st.remote && days > 7;
+  lamp.classList.toggle('warn', !good);
+  lamp.textContent = good ? 'All good' : 'Back room: needs a look';
+}
+$('#lamp').addEventListener('click', () => openCounter('room'));
 function ezraState() {
   const waiting = hub.allowed ? hub.questions.length : 0;
   const busy = hub.sessions.some((s) => s.status === 'working');
@@ -1768,6 +1763,7 @@ async function load() {
   const questions = hub.allowed ? hub.questions : manifest.mode === 'store' ? [] : await getJSON('inbox.json', []);
   if (hub.allowed) lineup = new Map(((await getJSON('api/projects', null))?.projects ?? []).map((p) => [p.name, p]));
   ezraState();
+  if (hub.allowed) lampFrom(await getJSON('api/status', null));
   $('#tab-q').textContent = hub.questions.length ? `Your call (${hub.questions.length})` : 'Your call';
   const shelfKey = JSON.stringify([manifest, questions.map((q) => q.title), [...lineup.values()].map((p) => [p.name, p.step, p.waiting, p.inStore])]);
   if (shelfKey !== lastShelf) {
