@@ -371,6 +371,8 @@ button.glass { cursor: pointer; }
 .line .facts { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
 .btn.go { background-color: var(--pass); color: #fff; }
 .btn.go:hover { background-color: #359a56; }
+.btn.trash { color: var(--game); } /* quiet, last in the row, until it's asked twice */
+.btn.trash.armed { background-color: var(--game); color: #fff; }
 .dot.warn { background: var(--fix); }
 .mode { display: inline-block; margin: 5px 0 0; padding: 4px 7px 3px; border-radius: 4px; font: 400 1rem/1 var(--f-led); letter-spacing: .03em; background: var(--ink); color: var(--led); }
 .hold-info .kind { margin: 0; font: 400 1.15rem/1 var(--f-led); letter-spacing: .06em; color: var(--muted); }
@@ -1220,6 +1222,7 @@ function pickUp(item, from, back = false) {
       else { await navigator.clipboard.writeText(url); toast('Link copied.'); }
     } catch { /* the share sheet was closed */ }
   }));
+  if (p && !item.live?.pages) actions.push(trashButton(item));
   $('#hold-actions').replaceChildren(...actions);
   hold.hidden = false;
   link('box', item);
@@ -1267,6 +1270,33 @@ function publishButton(item, p) {
       const s = await api(`/api/projects/${item.name}/publish`, {});
       letGo();
       toast('On it. The progress is in my bubble.');
+      openCounter('talk');
+      openThread(s);
+    } catch (e) {
+      toast(e.message);
+      b.disabled = false;
+    }
+  });
+  return b;
+}
+
+// Trashing asks twice too; then Ezra takes it off the shelf and asks what didn't work, for the lessons.
+function trashButton(item) {
+  const b = el('button', { type: 'button', className: 'btn trash' }, 'Trash it');
+  let armed = null;
+  b.addEventListener('click', async () => {
+    if (!armed) {
+      b.textContent = 'Sure? Click again to trash it';
+      b.classList.add('armed');
+      armed = setTimeout(() => { armed = null; b.textContent = 'Trash it'; b.classList.remove('armed'); }, 5000);
+      return;
+    }
+    clearTimeout(armed);
+    b.disabled = true;
+    try {
+      const s = await api(`/api/projects/${item.name}/trash`, {});
+      letGo();
+      toast(`Taking ${item.title} off the shelf. It can always come back.`);
       openCounter('talk');
       openThread(s);
     } catch (e) {
