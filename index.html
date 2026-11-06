@@ -851,6 +851,7 @@ function updateSign(first) {
   document.querySelector('meta[name=apple-mobile-web-app-title]').content = store() ? 'ForgynGames' : 'Shelf'; // the name under the home-screen icon
   $('#to-store').hidden = store();
   $('#open-sign').hidden = !store();
+  if (window.top !== window) $('#itch').hidden = true; // already on itch.io, inside its embed
   const toFix = data.items.filter((i) => i.problems > 0).length;
   $('#summary').textContent = !n ? (store() ? 'Opening soon' : 'Open 24/7, just for you')
     : store() ? `${n} title${n > 1 ? 's' : ''} on the shelf`
