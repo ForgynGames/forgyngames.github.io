@@ -176,6 +176,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-
 .sticker.pass { background: var(--pass); color: #fff; }
 .sticker.fix { background: var(--fix); color: var(--ink); }
 .sticker.call { background: var(--game); color: #fff; }
+.sticker.store { background: var(--site); color: #fff; }
 .starburst {
   position: absolute; left: -14px; bottom: 15%; width: 34%; aspect-ratio: 1; z-index: 1;
   display: grid; place-items: center; transform: rotate(-12deg); color: var(--ink); font: 400 clamp(.6rem, 4cqi, .95rem)/1 var(--f-sign);
@@ -203,18 +204,34 @@ main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-
    measured from art/tv.webp, so both sets (the one on the counter and the one you play on) share them. */
 .set { position: relative; container-type: inline-size; filter: drop-shadow(0 22px 26px rgb(0 0 0 / .45)); }
 .set > img { position: relative; z-index: 1; display: block; width: 100%; height: auto; pointer-events: none; }
-.glass { position: absolute; left: 7.5%; top: 10.6%; width: 67.7%; height: 69.2%; padding: 0; border: 0; overflow: hidden; background: #0d0f0e; color: inherit; }
+.glass { /* the tube; dark grey-green glass when the set is off */
+  position: absolute; left: 7.5%; top: 10.6%; width: 67.7%; height: 69.2%; padding: 0; border: 0; overflow: hidden; color: inherit;
+  background: radial-gradient(ellipse at 38% 30%, #2c312e, #121413 72%);
+}
 button.glass { cursor: pointer; }
-.glass > img, .glass > iframe { display: block; width: 100%; height: 100%; border: 0; object-fit: cover; object-position: top center; background: #000; }
-.glass > canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; image-rendering: pixelated; opacity: 0; pointer-events: none; }
+.pic { position: absolute; inset: 0; display: block; transform-origin: 50% 50%; }
+.pic > img, .pic > iframe { display: block; width: 100%; height: 100%; border: 0; object-fit: cover; object-position: top center; background: #000; }
+.snow { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; pointer-events: none; image-rendering: pixelated; }
+.beam { /* the dot of light a tube leaves behind as it switches off */
+  position: absolute; left: 50%; top: 50%; z-index: 2; width: 7%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle, #fff 0 18%, rgb(214 238 228 / .55) 42%, transparent 70%);
+}
+/* Changing channels on a tape-era set: the picture rolls, tears sideways and settles */
+.pic.roll { animation: vhs .5s steps(7) 1; }
+@keyframes vhs {
+  0% { transform: translateY(-16%) skewX(7deg); filter: contrast(1.5) saturate(1.7) brightness(1.3); }
+  25% { transform: translateY(7%) translateX(3%) skewX(-5deg); }
+  50% { transform: translateY(-4%) translateX(-2%) skewX(3deg); filter: contrast(1.25) saturate(1.3); }
+  75% { transform: translateY(2%) translateX(1%); }
+  100% { transform: none; filter: none; }
+}
 .glass::after { /* scanlines and the curve of the tube */
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: repeating-linear-gradient(to bottom, rgb(0 0 0 / .18) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 62%, rgb(0 0 0 / .45));
 }
 #tv-set .glass::after { background: repeating-linear-gradient(to bottom, rgb(0 0 0 / .06) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 72%, rgb(0 0 0 / .3)); }
-.set.off .glass > img, .set.off .glass > iframe { visibility: hidden; }
+.set.off .pic { visibility: hidden; }
 .osd { position: absolute; z-index: 2; top: 6%; left: 6%; margin: 0; font: 400 clamp(1rem, 6cqi, 2.6rem)/1 var(--f-led); color: var(--led); letter-spacing: .04em; pointer-events: none; opacity: 0; }
-.crt { position: absolute; inset: 0; z-index: 3; background: #f4f8f2; pointer-events: none; }
 .knob {
   position: absolute; z-index: 2; width: 16%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; padding: 0; border: 0; cursor: grab;
   background: url(art/tv.webp) no-repeat; background-size: 625% auto; transition: rotate .25s cubic-bezier(.22, 1, .36, 1); touch-action: none;
@@ -234,7 +251,7 @@ button.glass { cursor: pointer; }
 .demo-set { max-width: 940px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); gap: 28px; align-items: center; }
 @media (max-width: 700px) { .demo-set { grid-template-columns: 1fr; gap: 14px; } }
 .demo-caption { color: var(--plate); }
-.demo-caption .ch { margin: 0; font: 400 1.3rem/1 var(--f-led); letter-spacing: .06em; color: var(--led); }
+.demo-caption .ch { margin: 0; font: 400 1.3rem/1 var(--f-led); letter-spacing: .03em; color: var(--led); }
 .demo-caption h2 { margin: 8px 0 8px; font: 400 clamp(1.5rem, 3.6vw, 2.25rem)/1.05 var(--f-sign); }
 .demo-caption p { margin: 0 0 18px; max-width: 46ch; line-height: 1.5; color: rgb(244 236 214 / .84); }
 .demo-caption .hint { margin: 14px 0 0; font-size: .85rem; color: rgb(244 236 214 / .62); }
@@ -247,6 +264,9 @@ button.glass { cursor: pointer; }
 }
 .tag strong { font: 800 .98rem/1 var(--f-cond); color: var(--ink); }
 .tag time { margin-right: auto; }
+.tag .stage { margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 3px 5px 2px; border-radius: 3px;
+  font: 400 .95rem/1 var(--f-led); letter-spacing: .03em; background: var(--ink); color: var(--led); }
+.tag .stage.wait { background: var(--game); color: #fff; }
 .icon { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 3px; background: none; color: var(--ink); cursor: pointer; }
 .icon:hover, .icon:focus-visible { background: var(--plate); outline: none; }
 .icon svg { width: 15px; height: 15px; }
@@ -268,7 +288,25 @@ button.glass { cursor: pointer; }
 .held { position: relative; width: min(440px, 86vw, 60dvh); aspect-ratio: 5 / 7; transform-style: preserve-3d; cursor: grab; touch-action: pan-y; user-select: none; }
 .held:active { cursor: grabbing; }
 .held .face { box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 18px 26px 34px rgb(0 0 0 / .5); }
-.hold-info { position: relative; padding: 20px 22px 18px; width: min(400px, 100%); }
+.hold-info { position: relative; padding: 20px 22px 18px; width: min(400px, 100%); max-height: calc(100dvh - 40px); overflow: auto; scrollbar-width: thin; }
+/* Dev view: where the product is on the production line, and how it got there */
+.line { margin: 0 0 16px; padding: 12px 12px 10px; border: 2px solid var(--ink); border-radius: 8px; background: #fffdf6; }
+.line h3 { margin: 0 0 8px; font: 400 .78rem/1 var(--f-sign); letter-spacing: .05em; color: var(--muted); }
+.track { display: flex; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.track li { flex: 1; height: 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--plate); }
+.track li.done { background: var(--pass); }
+.track li.now { background: var(--fix); }
+.track li.now.wait { background: var(--game); }
+@media (prefers-reduced-motion: no-preference) { .track li.now { animation: blink 1s steps(1) infinite; } }
+.line .where { margin: 8px 0 0; font: 400 1.2rem/1.1 var(--f-led); }
+.history { margin: 8px 0 0; padding: 8px 0 0; list-style: none; display: grid; gap: 4px; border-top: 2px dashed rgb(28 25 21 / .2); font-size: .88rem; }
+.history li { display: flex; justify-content: space-between; gap: 10px; }
+.history li span:last-child { color: var(--muted); text-align: right; }
+.line .facts { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
+.btn.go { background-color: var(--pass); color: #fff; }
+.btn.go:hover { background-color: #359a56; }
+.dot.warn { background: var(--fix); }
+.mode { display: inline-block; margin: 8px 0 0; padding: 4px 7px 3px; border-radius: 4px; font: 400 1rem/1 var(--f-led); letter-spacing: .03em; background: var(--ink); color: var(--led); }
 .hold-info .kind { margin: 0; font: 400 1.15rem/1 var(--f-led); letter-spacing: .06em; color: var(--muted); }
 .hold-info h2 { margin: 6px 0 12px; font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.05 var(--f-sign); padding-right: 40px; }
 .hold-info .hint { margin: 14px 0 0; font-size: .85rem; color: var(--muted); }
@@ -391,10 +429,24 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
 .messages { display: flex; flex-direction: column; gap: 8px; }
 .msg { max-width: 92%; padding: 9px 12px; border-radius: 8px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 rgb(28 25 21 / .18); }
 .msg.user { align-self: flex-end; background: var(--ink); color: var(--plate); white-space: pre-wrap; }
-.msg.agent { align-self: flex-start; background: #fffdf6; }
-.msg.tool { align-self: flex-start; border: 0; box-shadow: none; padding: 0 4px; color: var(--muted); font: 400 1.05rem/1.1 var(--f-led); }
+.msg.agent { /* Ezra: his face, then a speech bubble */
+  align-self: flex-start; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; align-items: start;
+  padding: 0; border: 0; box-shadow: none; background: none; max-width: 96%;
+}
+.msg.agent .say { padding: 9px 12px; background: #fffdf6; border: 2px solid var(--ink); border-radius: 4px 12px 12px 12px; box-shadow: 3px 3px 0 rgb(28 25 21 / .18); }
+.msg.agent .say > :last-child { margin-bottom: 0; }
+.ezra-face { /* Ezra's head, cropped from his idle frame */
+  width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); background: #e9dcc0 url(art/ezra-1.webp) no-repeat;
+  background-size: 330%; background-position: 46% 7%;
+}
+.msg.tool { align-self: flex-start; border: 0; box-shadow: none; padding: 0 4px 0 46px; color: var(--muted); font: italic 500 .86rem/1.3 var(--f-body); }
 .msg.error { align-self: flex-start; border-color: var(--fail, #b3261e); color: #8f1d17; background: #fff3f1; }
-.working { color: var(--muted); font-size: .9rem; }
+.thinking { margin: 0; padding-left: 46px; color: var(--muted); font: italic 500 .9rem/1.2 var(--f-body); }
+.dots span { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  .dots span { animation: blink 1.2s steps(1) infinite; }
+  .dots span:nth-child(2) { animation-delay: .2s; } .dots span:nth-child(3) { animation-delay: .4s; }
+}
 .composer { display: grid; gap: 8px; position: sticky; bottom: -18px; padding: 10px 0 0; background: var(--plate); }
 .composer-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .toast { /* Ezra's quick lines, in a small bubble over his head */
@@ -426,8 +478,10 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
       <h1 id="store-name">ForgynGames</h1>
       <p class="tagline" id="tagline">Games · Web apps &amp; sites</p>
       <p class="summary" id="summary">Stocking the shelves…</p>
+      <p class="mode" id="mode" hidden>DEV VIEW · only you see this</p>
     </div>
     <div class="sign-side">
+      <a class="btn small" id="to-store" href="https://forgyngames.github.io" target="_blank" rel="noopener" hidden>Open the store ↗</a>
       <a class="waiting" id="waiting" href="https://github.com/warfare-hub/factory/issues?q=is%3Aopen+label%3Aneeds-you" hidden></a>
       <nav class="aisles" aria-label="Aisles">
         <button type="button" data-aisle="all" aria-pressed="true">All</button>
@@ -440,7 +494,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
 <section class="demo" id="demo" hidden aria-labelledby="demo-title">
   <div class="demo-set">
     <div class="set on" id="demo-set">
-      <button type="button" class="glass" id="demo-screen"><canvas width="96" height="60" aria-hidden="true"></canvas><span class="osd" aria-hidden="true"></span><span class="crt" hidden></span></button>
+      <button type="button" class="glass" id="demo-screen"><span class="pic"></span><canvas class="snow" width="320" height="254" aria-hidden="true"></canvas><span class="beam"></span><span class="osd" aria-hidden="true"></span></button>
       <img src="art/tv.webp" alt="" width="880" height="684">
       <button type="button" class="knob ch" title="Channel: turn it, or click its right or left side" aria-label="Channel"></button>
       <button type="button" class="knob vol" title="Volume: turn it, or click its right or left side" aria-label="Volume" role="slider" aria-valuemin="0" aria-valuemax="10"></button>
@@ -462,7 +516,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
 <div class="overlay" id="tv" hidden>
   <div class="tv-room" role="dialog" aria-modal="true" aria-labelledby="tv-title">
     <div class="set on" id="tv-set">
-      <div class="glass"><iframe id="tv-frame" title="Game or app" allow="autoplay; fullscreen; gamepad"></iframe><p class="osd" aria-live="polite"></p><div class="crt" hidden></div></div>
+      <div class="glass"><div class="pic"><iframe id="tv-frame" title="Game or app" allow="autoplay; fullscreen; gamepad"></iframe></div><canvas class="snow" width="320" height="254" aria-hidden="true"></canvas><div class="beam"></div><p class="osd" aria-live="polite"></p></div>
       <img src="art/tv.webp" alt="" width="880" height="684">
       <button type="button" class="knob ch" title="Channel: turn it, or click its right or left side" aria-label="Channel"></button>
       <button type="button" class="knob vol" title="Volume: turn it, or click its right or left side" aria-label="Volume" role="slider" aria-valuemin="0" aria-valuemax="10"></button>
@@ -485,6 +539,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
       <p class="kind" id="hold-kind"></p>
       <h2 id="hold-title"></h2>
       <ul class="specs" id="hold-specs"></ul>
+      <div id="hold-line"></div>
       <div class="actions" id="hold-actions"></div>
       <p class="hint">Drag the box to turn it over, or press ← →.</p>
     </div>
@@ -565,6 +620,7 @@ const short = (iso) => {
 };
 
 let data = { mode: 'shelf', items: [] };
+let lineup = new Map(); // dev view only: where each product is on the production line
 let inbox = [];
 let aisle = 'all';
 let seen = null;
@@ -588,8 +644,9 @@ function frontFace(item) {
   if (!store()) {
     const waiting = calls(item).length;
     const ok = item.problems === 0;
-    face.append(el('span', { className: `sticker ${waiting ? 'call' : ok ? 'pass' : 'fix'}` },
-      waiting ? 'Your call' : ok ? 'Checked' : `${item.problems} to fix`));
+    const live = Boolean(item.live?.pages);
+    face.append(el('span', { className: `sticker ${waiting ? 'call' : !ok ? 'fix' : live ? 'store' : 'pass'}` },
+      waiting ? 'Your call' : !ok ? `${item.problems} to fix` : live ? 'In store' : 'Checked'));
   }
   if (isNew(item)) face.append(el('span', { className: 'starburst', innerHTML: STAR }, el('span', {}, 'New')));
   return face;
@@ -619,8 +676,10 @@ function box(item) {
   caseButton.addEventListener('pointerleave', () => { clearTimeout(turnTimer); caseButton.classList.remove('turned'); });
   const save = el('a', { className: 'icon', href: download(item), download: `${item.name}.html`, title: 'Download', innerHTML: icon('download') });
   save.setAttribute('aria-label', `Download ${item.title}`);
+  const p = lineup.get(item.name);
   const tag = el('p', { className: 'tag' }, el('strong', {}, `${item.kb} KB`),
-    el('time', { dateTime: item.shippedAt ?? item.checkedAt }, short(item.shippedAt ?? item.checkedAt)), save);
+    p ? el('span', { className: `stage${p.waiting ? ' wait' : ''}`, title: `On the production line: ${p.stage}` }, p.stage.toUpperCase())
+      : el('time', { dateTime: item.shippedAt ?? item.checkedAt }, short(item.shippedAt ?? item.checkedAt)), save);
   const li = el('li', { className: 'item' }, caseButton, tag);
   li.dataset.name = item.name;
   return li;
@@ -679,6 +738,8 @@ function updateSign(first) {
   $('#store-name').textContent = store() ? 'ForgynGames' : 'Shelf';
   $('#tagline').textContent = store() ? 'Games and web apps · one file each, play anywhere' : 'Games · Web apps & sites, built on Ezra Mini';
   document.title = `${!store() && inbox.length ? `(${inbox.length}) ` : ''}${store() ? 'ForgynGames' : 'Shelf · Ezra Mini'}`;
+  $('#mode').hidden = store();
+  $('#to-store').hidden = store();
   const toFix = data.items.filter((i) => i.problems > 0).length;
   $('#summary').textContent = !n ? (store() ? 'Opening soon' : 'Open 24/7 on the home network')
     : store() ? `${n} title${n > 1 ? 's' : ''} on the shelf`
@@ -708,11 +769,31 @@ function hiss(ms = 240) {
     const d = buffer.getChannelData(0);
     for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
     const source = audio.createBufferSource();
+    const highpass = audio.createBiquadFilter(); // static lives up high: drop the rumble
+    highpass.type = 'highpass';
+    highpass.frequency.value = 1800;
     const gain = audio.createGain();
-    gain.gain.value = (volume / 10) * 0.12;
+    gain.gain.value = (volume / 10) * 0.14;
     source.buffer = buffer;
-    source.connect(gain).connect(audio.destination);
+    source.connect(highpass).connect(gain).connect(audio.destination);
     source.start();
+  } catch { /* no audio on this device */ }
+}
+// The low thunk of a set switching on.
+function thunk() {
+  if (!volume) return;
+  try {
+    audio ??= new AudioContext();
+    const t = audio.currentTime;
+    const o = audio.createOscillator();
+    const g = audio.createGain();
+    o.frequency.setValueAtTime(95, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+    g.gain.setValueAtTime((volume / 10) * 0.3, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.connect(g).connect(audio.destination);
+    o.start(t);
+    o.stop(t + 0.22);
   } catch { /* no audio on this device */ }
 }
 function osd(set, text) {
@@ -723,31 +804,68 @@ function osd(set, text) {
   o.timer = setTimeout(() => { o.style.opacity = 0; }, 1600);
 }
 const setPower = (set, on) => { set.classList.toggle('on', on); set.classList.toggle('off', !on); };
+// Static like a real set between channels: fine snow, streaky rows, a dark band rolling down and the odd bright tracking line.
+function snow(set, ms = 380, strength = 1) {
+  if (calm) return Promise.resolve();
+  const c = set.querySelector('.snow');
+  const g = c.getContext('2d');
+  const { width: w, height: h } = c;
+  const image = g.createImageData(w, h);
+  const d = image.data;
+  const start = performance.now();
+  c.style.opacity = strength;
+  return new Promise((done) => {
+    (function frame(t) {
+      const k = (t - start) / ms;
+      const band = ((k * 1.6) % 1) * h;
+      for (let y = 0; y < h; y++) {
+        const near = Math.abs(y - band) / h;
+        const row = 0.5 + Math.random() * 0.5 - (near < 0.12 ? 0.4 * (1 - near / 0.12) : 0);
+        const tracking = Math.random() < 0.015;
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4;
+          d[i] = d[i + 1] = d[i + 2] = tracking ? 190 + Math.random() * 65 : Math.random() * 255 * row;
+          d[i + 3] = 255;
+        }
+      }
+      g.putImageData(image, 0, 0);
+      if (k < 1) requestAnimationFrame(frame);
+      else M.animate(c, { opacity: [strength, 0] }, { duration: 0.15 }).then(done);
+    })(start);
+  });
+}
+// Changing channels: static with a rolling band while the picture rolls, tears and settles.
+function retune(set) {
+  if (calm) return;
+  snow(set, 380);
+  const pic = set.querySelector('.pic');
+  pic.classList.remove('roll');
+  void pic.offsetWidth; // restart the roll
+  pic.classList.add('roll');
+}
+// Switching on: a dot of light opens into a line, the line opens into a bright picture that settles, with a burst of snow.
 async function powerOn(set) {
   setPower(set, true);
   if (calm) return;
-  const crt = set.querySelector('.crt');
-  crt.hidden = false;
-  await animate(crt, { scaleX: [0, 1, 1], scaleY: [0.006, 0.006, 1], opacity: [1, 1, 1] }, { duration: 0.5, times: [0, 0.45, 1] });
-  await animate(crt, { opacity: [1, 0] }, { duration: 0.3 });
-  crt.hidden = true;
+  thunk();
+  const pic = set.querySelector('.pic');
+  M.animate(set.querySelector('.beam'), { opacity: [0, 1, 0], scale: [0.3, 1, 1] }, { duration: 0.3 });
+  await M.animate(pic, { scaleX: [0.004, 1], scaleY: [0.006, 0.006], filter: ['brightness(4)', 'brightness(4)'] }, { duration: 0.15, ease: 'easeOut' });
+  snow(set, 450, 0.55);
+  hiss(300);
+  await M.animate(pic, { scaleY: [0.006, 1], filter: ['brightness(4)', 'brightness(1)'] }, { duration: 0.35, ease: [0.22, 1, 0.36, 1] });
 }
+// Switching off: the picture squeezes into a bright line, the line into a dot, and the dot fades slowly, like phosphor.
 async function powerOff(set) {
   if (!calm) {
-    const crt = set.querySelector('.crt');
-    crt.hidden = false;
-    await animate(crt, { opacity: [0, 1], scaleY: [1, 0.006], scaleX: [1, 1] }, { duration: 0.25 });
-    await animate(crt, { scaleX: [1, 0] }, { duration: 0.15 });
-    crt.hidden = true;
+    const pic = set.querySelector('.pic');
+    await M.animate(pic, { scaleY: [1, 0.006], filter: ['brightness(1)', 'brightness(4)'] }, { duration: 0.18, ease: 'easeIn' });
+    await M.animate(pic, { scaleX: [1, 0.004] }, { duration: 0.14, ease: 'easeIn' });
+    setPower(set, false);
+    M.animate(pic, { scaleX: 1, scaleY: 1, filter: 'brightness(1)' }, { duration: 0 });
+    M.animate(set.querySelector('.beam'), { opacity: [1, 0], scale: [1, 0.25] }, { duration: 0.75, ease: 'easeOut' }); // fades on its own
   }
   setPower(set, false);
-}
-async function flash(set) {
-  if (calm) return;
-  const crt = set.querySelector('.crt');
-  crt.hidden = false;
-  await animate(crt, { opacity: [0.9, 0] }, { duration: 0.25 });
-  crt.hidden = true;
 }
 // Games on the TV hear the volume knob: LittleJS games through setSoundVolume, anything else through its media elements.
 function applyVolume() {
@@ -834,8 +952,8 @@ function tune(n, quiet) {
   if (!items.length) return;
   channel = (n + items.length) % items.length;
   const item = items[channel];
-  if (!quiet && !calm) staticBurst();
-  if (!demoImg) $('#demo-screen').prepend(demoImg = el('img', { alt: '' }));
+  if (!quiet) retune(demoSet);
+  if (!demoImg) $('#demo-screen .pic').append(demoImg = el('img', { alt: '' }));
   demoImg.src = `thumbs/${item.name}.png?${stamp(item)}`;
   $('#demo-ch').textContent = `CH ${chName(channel)} · Now showing`;
   $('#demo-title').textContent = item.title;
@@ -850,22 +968,6 @@ function schedule() {
   clearTimeout(demoTimer);
   if (!calm && data.items.length > 1 && demoSet.classList.contains('on') && !demo.matches(':hover, :focus-within'))
     demoTimer = setTimeout(() => tune(channel + 1), 8000);
-}
-function staticBurst() {
-  const c = demoSet.querySelector('canvas');
-  const g = c.getContext('2d');
-  const noise = g.createImageData(c.width, c.height);
-  const end = performance.now() + 380;
-  c.style.opacity = 1;
-  (function frame(t) {
-    for (let i = 0; i < noise.data.length; i += 4) {
-      noise.data[i] = noise.data[i + 1] = noise.data[i + 2] = Math.random() * 255;
-      noise.data[i + 3] = 255;
-    }
-    g.putImageData(noise, 0, 0);
-    if (t < end) requestAnimationFrame(frame);
-    else animate(c, { opacity: [1, 0] }, { duration: 0.25 });
-  })(performance.now());
 }
 async function demoPower() {
   if (demoSet.classList.contains('on')) {
@@ -936,7 +1038,7 @@ wireSet(tvSet, {
   channel: (d) => {
     const items = data.items;
     const next = items[(items.indexOf(playing) + d + items.length) % items.length];
-    flash(tvSet);
+    retune(tvSet);
     play(next);
     osd(tvSet, `CH ${chName(items.indexOf(next))}`);
   },
@@ -969,12 +1071,15 @@ function pickUp(item, from, back = false) {
     ...(!store() && item.problems ? [`${item.problems} to fix`] : []),
     ...Object.entries(item.scores ?? {}).map(([k, v]) => `${k} ${v}`)];
   $('#hold-specs').replaceChildren(...specs.map((t) => el('li', {}, t)));
+  const p = !store() && hub.allowed ? lineup.get(item.name) : null;
+  $('#hold-line').replaceChildren(...(p ? [lineSection(p)] : []));
   const button = (label, onClick, className = 'btn') => { const b = el('button', { type: 'button', className }, label); b.addEventListener('click', onClick); return b; };
   const linkBtn = (label, href) => el('a', { className: 'btn', href, target: '_blank', rel: 'noopener' }, label);
   const playBtn = el('button', { type: 'button', className: 'btn primary', innerHTML: `${icon('play')} ${item.kind === 'game' ? 'Play it' : 'Try it'} on the TV` });
   playBtn.addEventListener('click', () => { letGo(); openTV(item, from); });
   const actions = [playBtn, button('Turn it over', () => turnTo(angle + 180)),
     el('a', { className: 'btn', href: download(item), download: `${item.name}.html` }, 'Take it home')];
+  if (p) actions.splice(1, 0, publishButton(item, p));
   if (hub.allowed && !store()) actions.push(button('Ask Ezra about it', () => {
     letGo();
     openCounter('talk');
@@ -1004,6 +1109,48 @@ function pickUp(item, from, back = false) {
   animate(hold.querySelector('.hold-info'), { opacity: [0, 1], x: [30, 0] }, { duration: 0.3, delay: 0.12 });
   playBtn.focus();
 }
+// Dev view: the production line track, the questions so far with Brandon's answers, and where the code and the store stand.
+const ANSWERED = { yes: 'Kept going', change: 'Changed it', no: 'Shelved' };
+function lineSection(p) {
+  const track = el('ol', { className: 'track' }, ...p.line.map((name, i) => {
+    const li = el('li', { className: i < p.step ? 'done' : i === p.step ? `now${p.waiting ? ' wait' : ''}` : '', title: name });
+    li.setAttribute('aria-label', `${name}${i < p.step ? ', done' : i === p.step ? ', here now' : ''}`);
+    return li;
+  }));
+  const history = el('ul', { className: 'history' }, ...p.asked.map((q) => el('li', {},
+    el('span', {}, `#${q.number} ${q.question}`), el('span', {}, q.open ? 'Waiting on you' : `${ANSWERED[q.answer]} · ${short(q.answeredAt)}`))));
+  const facts = [p.ahead ? `${p.ahead} change${p.ahead > 1 ? 's' : ''} not on main yet` : 'All on main', p.inStore ? 'In the store' : 'Not in the store yet'];
+  return el('section', { className: 'line' }, el('h3', {}, 'Production line'), track,
+    el('p', { className: 'where' }, `Stage ${p.step + 1} of ${p.line.length}: ${p.stage}${p.waiting ? ' · your call' : p.shelved ? ' · shelved' : ''}`),
+    ...(p.asked.length ? [history] : []), el('p', { className: 'facts' }, facts.join(' · ')));
+}
+// Publishing asks twice, and says so when something is still open or broken.
+function publishButton(item, p) {
+  const label = p.inStore ? 'Update the store copy' : 'Put it in the store';
+  const b = el('button', { type: 'button', className: 'btn go' }, label);
+  let armed = null;
+  b.addEventListener('click', async () => {
+    if (!armed) {
+      b.textContent = p.waiting ? 'A question is still open. Ship anyway?' : item.problems ? `${item.problems} to fix. Ship anyway?` : 'Sure? Click again to ship it';
+      armed = setTimeout(() => { armed = null; b.textContent = label; }, 5000);
+      return;
+    }
+    clearTimeout(armed);
+    b.disabled = true;
+    try {
+      const s = await api(`/api/projects/${item.name}/publish`, {});
+      letGo();
+      toast('On it. The progress is in my bubble.');
+      openCounter('talk');
+      openThread(s);
+    } catch (e) {
+      toast(e.message);
+      b.disabled = false;
+    }
+  });
+  return b;
+}
+
 // Let go without flying back (to play it, or to talk about it).
 function letGo() {
   hold.hidden = true;
@@ -1210,9 +1357,8 @@ const CHOICES = (title) => (/ship\?/i.test(title) ? ['Ship it', 'Fix first', 'No
   : /fun\?|useful\?/i.test(title) ? ['Keep going', 'Change it', 'Shelve it'] : ['Yes', 'Change it', 'No']);
 function renderQuestions() {
   const n = hub.questions.length;
-  $('#tab-questions').replaceChildren(el('p', { className: 'ezra-line' },
-    n ? `${n === 1 ? 'One thing needs' : `${n} things need`} your call.` : "Nothing's waiting on you right now. I'll wave when something is."),
-  ...hub.questions.map(questionCard));
+  $('#tab-questions').replaceChildren(ezraLine(n ? `${n === 1 ? 'One thing needs' : `${n} things need`} your call.`
+    : "Nothing's waiting on you right now. I'll wave when something is."), ...hub.questions.map(questionCard));
 }
 function questionCard(q) {
   const item = data.items.find((i) => i.name === q.project);
@@ -1275,7 +1421,8 @@ function renderConversations() {
   });
   const talks = hub.sessions.filter((s) => !s.request).map((s) =>
     row(sessionTitle(s), `${s.status === 'working' ? 'Working now' : 'Idle'} · ${short(s.updatedAt)}`, s.status, () => openThread(s)));
-  $('#tab-talk').replaceChildren(el('div', { className: 'actions' }, idea, factory, request),
+  $('#tab-talk').replaceChildren(ezraLine('What are we talking about? Start something new, or pick up where we left off.'),
+    el('div', { className: 'actions' }, idea, factory, request),
     ...(requests.length ? [el('h3', {}, 'Client requests'), ...requests] : []),
     el('h3', {}, 'Conversations'),
     ...(talks.length ? talks : [el('p', { className: 'note' }, 'No conversations yet. Bring an idea and talk it through.')]));
@@ -1298,7 +1445,7 @@ async function renderRoom() {
   const days = st.login ? Math.floor((Date.parse(st.login) - Date.now()) / 86400e3) : null;
   const working = hub.sessions.filter((s) => s.status === 'working').length;
   const last = data.items[0];
-  panel.replaceChildren(el('ul', { className: 'status' },
+  panel.replaceChildren(ezraLine("Here's the back room: everything that keeps the store running."), el('ul', { className: 'status' },
     line(true, 'Hub', `Running since ${when(st.hubSince)}`),
     line(true, 'Agents', `${working} working, ${hub.sessions.length - working} idle · up to 4 at once`),
     line(st.remote, 'Remote Control', st.remote ? 'Running, for the Claude app and claude.ai' : 'Stopped. It restarts within 5 minutes.'),
@@ -1307,7 +1454,15 @@ async function renderRoom() {
     line(st.itch, 'itch.io', st.itch ? 'Logged in' : 'Not logged in. Needed the first time a game ships to itch.io.',
       st.itch ? null : fix('Log in', 'Log butler into itch.io: run `butler login` in tmux and show me the link to approve.')),
     line(true, 'Shelf', last ? `${data.items.length} in stock · last check ${when(last.checkedAt)}` : 'Empty'),
-    ...st.branches.map(([b, n]) => line(true, b, `${n} commit${n > 1 ? 's' : ''} not on main yet`))));
+    ...st.branches.map(([b, n]) => line(true, b, `${n} commit${n > 1 ? 's' : ''} not on main yet`))),
+    ...(lineup.size ? [el('h3', {}, 'On the line'), ...[...lineup.values()].map((p) => {
+      const item = data.items.find((i) => i.name === p.name);
+      const r = el('button', { type: 'button', className: 'row-card' }, el('strong', {}, item?.title ?? p.name),
+        el('span', { className: `dot ${p.waiting ? 'warn' : p.inStore ? 'working' : ''}` }),
+        el('span', { className: 'note' }, `${p.stage}${p.waiting ? ' · your call' : ''}${p.inStore ? ' · in the store' : ''}`));
+      r.addEventListener('click', async () => { await closeCounter(); if (item) pickUp(item, onShelf(item)); });
+      return r;
+    })] : []));
 }
 function openRequestForm() {
   const title = el('input', { type: 'text', placeholder: 'Who is it for, and what do they want?' });
@@ -1327,7 +1482,8 @@ function openRequestForm() {
       file.disabled = false;
     }
   });
-  $('#tab-talk').replaceChildren(el('h3', {}, 'New client request'), title, details, el('div', { className: 'actions' }, file, back));
+  $('#tab-talk').replaceChildren(ezraLine("Someone wants something made? Give it a title, paste what they sent, and I'll file it and talk it through with you."),
+    title, details, el('div', { className: 'actions' }, file, back));
   title.focus();
 }
 
@@ -1339,7 +1495,7 @@ async function openThread(s, autoText) {
   closeThread();
   showTab('talk');
   const messages = el('div', { className: 'messages' });
-  const working = el('p', { className: 'working', hidden: true }, 'Claude is working…');
+  const working = el('p', { className: 'thinking', hidden: true }, "Ezra's on it", el('span', { className: 'dots', ariaHidden: 'true' }, el('span', {}, '.'), el('span', {}, '.'), el('span', {}, '.')));
   const input = el('textarea', { placeholder: s.id ? 'Reply…' : s.project ? `What should change in ${projectTitle(s.project)}?`
     : s.factory ? 'Anything about the factory itself: logins, services, how things are going.'
     : 'Describe the idea: what it is, who it is for, how it should feel.' });
@@ -1352,14 +1508,20 @@ async function openThread(s, autoText) {
   back.addEventListener('click', () => { closeThread(); renderConversations(); });
   $('#tab-talk').replaceChildren(el('div', { className: 'thread-head' }, back, el('h3', {}, sessionTitle(s))),
     messages, working, form);
-  if (s.factory && !s.id) {
-    const hello = el('div', { className: 'msg agent' });
-    const chip = (label, go) => { const b = el('button', { type: 'button', className: 'btn small' }, label); b.addEventListener('click', go); return b; };
-    messages.append(hello, el('div', { className: 'actions' }, chip("I've got an idea", () => openThread({ title: 'New idea' })),
-      chip('New client request', openRequestForm), chip("How's the factory?", () => showTab('room'))));
-    typeOut(hello, GREETING.owner);
-  }
   const t = { id: s.id, project: s.project, factory: s.factory, messages, working, stop, live: null, source: null };
+  // A new conversation starts with Ezra saying something, the way a clerk would.
+  if (!s.id && !autoText) {
+    const chip = (label, go) => { const b = el('button', { type: 'button', className: 'btn small' }, label); b.addEventListener('click', go); return b; };
+    const hello = ezraMsg();
+    const title = s.project ? projectTitle(s.project) : '';
+    const [line, chips] = s.factory ? [GREETING.owner, [chip("I've got an idea", () => openThread({ title: 'New idea' })),
+      chip('New client request', openRequestForm), chip("How's the factory?", () => showTab('room'))]]
+      : s.project ? [`${title}? Sure thing. Tell me what to change, or I can just keep going on it.`,
+        [chip('Keep going', () => say(t, `Keep going on ${title}.`).catch((err) => toast(err.message)))]]
+      : ["A new one? I'm all ears. What is it, who's it for, and how should it feel?", []];
+    messages.append(hello.node, ...(chips.length ? [el('div', { className: 'actions' }, ...chips)] : []));
+    typeOut(hello.body, line);
+  }
   thread = t;
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
   form.addEventListener('submit', async (e) => {
@@ -1396,26 +1558,59 @@ function setWorking(t, on) {
   t.working.hidden = !on;
   t.stop.hidden = !on;
 }
+// Ezra's side of a conversation: his face and a speech bubble.
+function ezraMsg() {
+  const body = el('div', { className: 'say md' });
+  return { node: el('div', { className: 'msg agent' }, el('span', { className: 'ezra-face', ariaHidden: 'true' }), body), body };
+}
+// His replies type out at a steady pace as they stream in, catching up when the words arrive faster than he types.
+function reveal(live) {
+  if (calm) { live.body.innerHTML = md(live.text); live.shown = live.text.length; return; }
+  if (live.raf) return;
+  const tick = () => {
+    const behind = live.text.length - live.shown;
+    if (behind <= 0) { live.raf = null; if (live.ended) live.body.append(moreMark()); return; }
+    live.shown += Math.max(2, Math.ceil(behind / 10));
+    live.body.innerHTML = md(live.text.slice(0, live.shown));
+    live.node.scrollIntoView({ block: 'end' });
+    live.raf = requestAnimationFrame(tick);
+  };
+  live.raf = requestAnimationFrame(tick);
+}
 function show(t, e, live) {
   const add = (node) => {
     t.messages.append(node);
     if (live) animate(node, { y: [8, 0], opacity: [0, 1] }, { duration: 0.2 });
     node.scrollIntoView({ block: 'end' });
   };
-  if (e.kind === 'user') { t.live = null; add(el('div', { className: 'msg user' }, e.text)); setWorking(t, true); }
-  else if (e.kind === 'delta') {
-    if (!t.live) { t.live = { node: el('div', { className: 'msg agent md' }), text: '' }; add(t.live.node); }
+  const speak = () => {
+    const m = ezraMsg();
+    add(m.node);
+    t.last = { ...m, text: '', shown: 0, raf: null, ended: false };
+    return t.last;
+  };
+  if (e.kind === 'user') {
+    t.live = null;
+    t.messages.querySelectorAll('.more').forEach((m) => m.remove());
+    add(el('div', { className: 'msg user' }, e.text));
+    setWorking(t, true);
+  } else if (e.kind === 'delta') {
+    t.live ??= speak();
     t.live.text += e.text;
-    t.live.node.innerHTML = md(t.live.text);
-    t.live.node.scrollIntoView({ block: 'end' });
+    if (live) reveal(t.live);
+    else t.live.body.innerHTML = md(t.live.text);
   } else if (e.kind === 'text') {
-    if (t.live) { t.live.node.innerHTML = md(e.text); t.live = null; }
-    else add(el('div', { className: 'msg agent md', innerHTML: md(e.text) }));
-  } else if (e.kind === 'tool') { t.live = null; add(el('div', { className: 'msg tool' }, `· ${e.text}`)); }
+    const m = t.live ?? speak();
+    m.text = e.text;
+    if (live) reveal(m);
+    else { m.body.innerHTML = md(e.text); m.shown = e.text.length; }
+    t.live = null;
+  } else if (e.kind === 'tool') { t.live = null; add(el('div', { className: 'msg tool' }, `Ezra ${e.text}`)); }
   else if (e.kind === 'done') {
     t.live = null;
     setWorking(t, false);
     if (!e.ok) add(el('div', { className: 'msg error' }, e.error ? `Stopped: ${e.error}` : 'Stopped.'));
+    else if (t.last) { t.last.ended = true; if (!t.last.raf) t.last.body.append(moreMark()); }
   }
 }
 
@@ -1427,16 +1622,24 @@ const GREETING = {
   store: 'Welcome to ForgynGames! Every title here is a single file. Pick up any box to play it, flip it for the back, or take it home with the download tag.',
 };
 // Ezra's own lines type themselves out, like a dialogue box.
+const moreMark = () => el('span', { className: 'more', ariaHidden: 'true' }, '▼');
 function typeOut(node, text) {
-  const more = () => node.append(el('span', { className: 'more', ariaHidden: 'true' }, '▼'));
-  if (calm) { node.textContent = text; more(); return; }
+  if (calm) { node.textContent = text; node.append(moreMark()); return; }
   let i = 0;
   const tick = () => {
     node.textContent = text.slice(0, ++i);
     if (i < text.length && node.isConnected) setTimeout(tick, 14);
-    else more();
+    else node.append(moreMark());
   };
-  tick();
+  requestAnimationFrame(tick); // after the caller has put the node on the page
+}
+// One of Ezra's lines at the top of a panel: typed out the first time he says it, already there after that.
+const spoken = new Set();
+function ezraLine(text) {
+  const p = el('p', { className: 'ezra-line' });
+  if (spoken.has(text)) p.append(text, moreMark());
+  else { spoken.add(text); typeOut(p, text); }
+  return p;
 }
 function renderGuest() {
   for (const [, panel] of Object.values(TABS)) $(panel).hidden = true;
@@ -1482,9 +1685,10 @@ async function load() {
       toast(s.factory ? 'Done! Tap here to read it.' : `${sessionTitle(s)} is done. Tap here to read it.`, () => { openCounter('talk'); openThread(s); });
   }
   const questions = hub.allowed ? hub.questions : manifest.mode === 'store' ? [] : await getJSON('inbox.json', []);
+  if (hub.allowed) lineup = new Map(((await getJSON('api/projects', null))?.projects ?? []).map((p) => [p.name, p]));
   ezraState();
   $('#tab-q').textContent = hub.questions.length ? `Your call (${hub.questions.length})` : 'Your call';
-  const shelfKey = JSON.stringify([manifest, questions.map((q) => q.title)]);
+  const shelfKey = JSON.stringify([manifest, questions.map((q) => q.title), [...lineup.values()].map((p) => [p.name, p.step, p.waiting, p.inStore])]);
   if (shelfKey !== lastShelf) {
     const first = !lastShelf;
     lastShelf = shelfKey;
