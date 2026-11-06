@@ -267,7 +267,7 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 }
 button.glass { cursor: pointer; }
 .pic { position: absolute; inset: 0; display: block; transform-origin: 50% 50%; }
-.pic > img, .pic > iframe { display: block; width: 100%; height: 100%; border: 0; object-fit: cover; object-position: top center; background: #000; }
+.pic > img, .pic > iframe, .pic > video { display: block; width: 100%; height: 100%; border: 0; object-fit: cover; object-position: top center; background: #000; }
 .snow { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; pointer-events: none; image-rendering: pixelated; }
 .beam { /* the dot of light a tube leaves behind as it switches off */
   position: absolute; left: 50%; top: 50%; z-index: 2; width: 7%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; opacity: 0; pointer-events: none;
@@ -1065,12 +1065,13 @@ function wireSet(set, { channel, power }) {
   set.querySelector('.power').addEventListener('click', power);
 }
 
-// The counter TV: cycles through the shelf in attract mode, with channel static between titles.
+// The counter TV: cycles through the shelf like a store's demo set, playing each title's trailer (silent, as browsers
+// autoplay only silent video), or its screenshot or box art, with channel static between titles.
 const demo = $('#demo');
 const demoSet = $('#demo-set');
 let channel = 0;
 let demoTimer;
-let demoImg;
+let demoImg, demoVideo;
 const demoItem = () => data.items[channel];
 function tune(n, quiet) {
   const items = data.items;
@@ -1089,8 +1090,28 @@ function tune(n, quiet) {
   if (!demoSet.classList.contains('on')) setPower(demoSet, true); // it was only off because the shelves were empty
   const item = items[channel];
   if (!quiet) retune(demoSet);
-  if (!demoImg) $('#demo-screen .pic').append(demoImg = el('img', { alt: '' }));
-  demoImg.src = `thumbs/${item.name}.png?${stamp(item)}`;
+  const pic = $('#demo-screen .pic');
+  if (!demoImg) pic.append(demoImg = el('img', { alt: '' }));
+  if (!demoVideo) {
+    pic.append(demoVideo = el('video', { muted: true, playsInline: true, preload: 'auto' }));
+    demoVideo.addEventListener('ended', () => tune(channel + 1)); // a trailer plays to its end, then the next title
+  }
+  const still = `thumbs/${item.name}.png?${stamp(item)}`;
+  const trailer = item.trailer && !calm; // players who prefer less motion get the still
+  demoImg.hidden = Boolean(trailer);
+  demoVideo.hidden = !trailer;
+  if (trailer) {
+    demoVideo.muted = true;
+    demoVideo.loop = items.length < 2;
+    demoVideo.poster = still;
+    demoVideo.src = `${item.trailer}?${stamp(item)}`;
+    demoVideo.play().catch(() => {});
+  } else {
+    demoVideo.pause();
+    demoVideo.removeAttribute('src');
+    demoImg.onerror = () => { demoImg.onerror = null; demoImg.src = `covers/${item.name}.png?${stamp(item)}`; }; // no screenshot: the box art
+    demoImg.src = still;
+  }
   $('#demo-ch').textContent = `CH ${chName(channel)} · Now showing`;
   $('#demo-title').textContent = item.title;
   $('#demo-pitch').textContent = item.summary || '';
@@ -1102,6 +1123,7 @@ function tune(n, quiet) {
 // Changes channel on its own every 8 seconds, but never while you're looking at it, while it's off, or if you prefer less motion.
 function schedule() {
   clearTimeout(demoTimer);
+  if (demoVideo && !demoVideo.hidden) return; // a trailer changes the channel itself, when it ends
   if (!calm && data.items.length > 1 && demoSet.classList.contains('on') && !demo.matches(':hover, :focus-within'))
     demoTimer = setTimeout(() => tune(channel + 1), 8000);
 }
@@ -1109,6 +1131,7 @@ async function demoPower() {
   if (demoSet.classList.contains('on')) {
     clearTimeout(demoTimer);
     demoSet.dataset.switchedOff = 'yes';
+    demoVideo?.pause();
     await powerOff(demoSet);
     $('#demo-ch').textContent = 'The TV is off';
   } else {
@@ -1145,17 +1168,19 @@ const tvSet = $('#tv-set');
 const frame = $('#tv-frame');
 let playing = null;
 frame.addEventListener('load', applyVolume);
-function play(item) {
+function play(item, trailer = false) { // the game itself, or its trailer
   playing = item;
   $('#tv-title').textContent = item.title;
   $('#tv-open').href = hrefOf(item);
   frame.title = item.title;
-  frame.src = hrefOf(item);
+  frame.removeAttribute('srcdoc');
+  if (trailer) frame.srcdoc = `<body style="margin:0;background:#000"><video src="${new URL(item.trailer, location.href)}" autoplay playsinline controls style="display:block;width:100%;height:100vh;object-fit:contain"></video>`;
+  else frame.src = hrefOf(item);
   link('play', item);
 }
-async function openTV(item, from) {
+async function openTV(item, from, trailer = false) {
   returnFocus = from;
-  play(item);
+  play(item, trailer);
   setPower(tvSet, false);
   tv.hidden = false;
   $('#tv-close').focus();
@@ -1168,6 +1193,7 @@ async function closeTV() {
   await powerOff(tvSet);
   await animate(tv, { opacity: [1, 0] }, { duration: 0.2 });
   tv.hidden = true;
+  frame.removeAttribute('srcdoc');
   frame.src = 'about:blank';
   link();
   returnFocus?.focus();
@@ -1219,6 +1245,7 @@ function pickUp(item, from, back = false) {
   playBtn.addEventListener('click', () => { letGo(); openTV(item, from); });
   const actions = [playBtn, button('Turn it over', () => turnTo(angle + 180)),
     el('a', { className: 'btn', href: download(item), download: `${item.name}.html` }, 'Take it home')];
+  if (item.trailer) actions.splice(1, 0, button('Watch the trailer', () => { letGo(); openTV(item, from, true); }));
   if (p) actions.splice(1, 0, publishButton(item, p));
   if (hub.allowed && !store()) actions.push(button('Ask Ezra about it', () => {
     letGo();
@@ -1234,6 +1261,7 @@ function pickUp(item, from, back = false) {
       else { await navigator.clipboard.writeText(url); toast('Link copied.'); }
     } catch { /* the share sheet was closed */ }
   }));
+  if (p && item.live?.pages) actions.push(askTwiceButton(item, 'Take it out of the store', 'unship', `Taking ${item.title} out of the store. It stays on the shelf.`));
   if (p && !item.live?.pages) actions.push(trashButton(item));
   $('#hold-actions').replaceChildren(...actions);
   hold.hidden = false;
@@ -1292,23 +1320,24 @@ function publishButton(item, p) {
   return b;
 }
 
-// Trashing asks twice too; then Ezra takes it off the shelf and asks what didn't work, for the lessons.
-function trashButton(item) {
-  const b = el('button', { type: 'button', className: 'btn trash' }, 'Trash it');
+// Trashing, and taking a title out of the store, ask twice too; then Ezra does it in his bubble.
+const trashButton = (item) => askTwiceButton(item, 'Trash it', 'trash', `Taking ${item.title} off the shelf. It can always come back.`);
+function askTwiceButton(item, label, action, done) {
+  const b = el('button', { type: 'button', className: 'btn trash' }, label);
   let armed = null;
   b.addEventListener('click', async () => {
     if (!armed) {
-      b.textContent = 'Sure? Click again to trash it';
+      b.textContent = `Sure? Click again to ${label.toLowerCase()}`;
       b.classList.add('armed');
-      armed = setTimeout(() => { armed = null; b.textContent = 'Trash it'; b.classList.remove('armed'); }, 5000);
+      armed = setTimeout(() => { armed = null; b.textContent = label; b.classList.remove('armed'); }, 5000);
       return;
     }
     clearTimeout(armed);
     b.disabled = true;
     try {
-      const s = await api(`/api/projects/${item.name}/trash`, {});
+      const s = await api(`/api/projects/${item.name}/${action}`, {});
       letGo();
-      toast(`Taking ${item.title} off the shelf. It can always come back.`);
+      toast(done);
       openCounter('talk');
       openThread(s);
     } catch (e) {
