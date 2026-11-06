@@ -10,6 +10,10 @@
 <meta property="og:url" content="https://forgyngames.github.io/">
 <meta property="og:description" content="Games, websites and web apps, each a single HTML file you can play anywhere.">
 <meta name="twitter:card" content="summary">
+<link rel="icon" href="art/icon.png">
+<link rel="apple-touch-icon" href="art/icon.png">
+<meta name="apple-mobile-web-app-title" content="Shelf">
+<meta name="theme-color" content="#1f4636">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;600&family=Bungee&family=VT323&display=swap">
@@ -197,7 +201,7 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .starburst span { position: relative; }
 
 /* When the row is full, older titles stand spine-out at its end, like a crowded video store */
-.spine-slot { flex: none; padding-bottom: 24px; margin-left: -19px; } /* spines stand close together */
+.spine-slot { flex: none; padding-bottom: 24px; margin-left: var(--spine-step, -19px); } /* spines stand close together */
 .spine { /* a strip of the title's own box art, with its name, like a game on a crowded shelf */
   --band: var(--game); position: relative; display: block; height: calc(var(--box-h) * .97); width: var(--spine-w, 38px); padding: 32px 0 22px;
   border: 0; border-radius: 2px; cursor: pointer; color: #fff;
@@ -784,7 +788,10 @@ function fill(shelf, items) {
   shelf.replaceChildren(...items.slice(0, faceOut).map(box), ...items.slice(faceOut).map(spine));
   const spare = room - faceOut * boxW;
   const fits = Math.floor(spare / (items.length - faceOut));
-  if (fits < spineW) shelf.style.setProperty('--spine-w', `${Math.max(14, fits - 3)}px`);
+  if (fits >= spineW) return;
+  const w = Math.max(14, fits - 3);
+  shelf.style.setProperty('--spine-w', `${w}px`);
+  shelf.style.setProperty('--spine-step', `${fits - w - 22}px`); // past the thinnest spine, they lean into each other instead of overflowing
 }
 let refit;
 addEventListener('resize', () => { stopReading(); clearTimeout(refit); refit = setTimeout(() => render('resize'), 150); });
@@ -795,6 +802,7 @@ function updateSign(first) {
   $('#tagline').textContent = store() ? 'Games and web apps · one file each, play anywhere' : 'Games · Web apps & sites, built on Ezra Mini';
   document.title = `${!store() && inbox.length ? `(${inbox.length}) ` : ''}${store() ? 'ForgynGames' : 'Shelf · Ezra Mini'}`;
   $('#mode').hidden = store();
+  document.querySelector('meta[name=apple-mobile-web-app-title]').content = store() ? 'ForgynGames' : 'Shelf'; // the name under the home-screen icon
   $('#to-store').hidden = store();
   $('#open-sign').hidden = !store();
   const toFix = data.items.filter((i) => i.problems > 0).length;
