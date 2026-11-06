@@ -5,9 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ForgynGames</title>
 <meta name="description" content="Games, websites and web apps, each a single HTML file you can play anywhere.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ForgynGames">
+<meta property="og:url" content="https://forgyngames.github.io/">
+<meta property="og:description" content="Games, websites and web apps, each a single HTML file you can play anywhere.">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;600&family=Bungee&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;600&family=Bungee&family=VT323&display=swap">
 <style>
 /* A late-90s neighborhood video store: green slatwall, maple shelves, hanging aisle signs, boxed copies
    face-out with price tags on the shelf edge, a CRT demo TV on the counter. The same page is the private
@@ -29,12 +34,19 @@
   --f-sign: "Bungee", "Arial Black", Impact, sans-serif;
   --f-cond: "Barlow Condensed", "Arial Narrow", sans-serif;
   --f-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --f-led: "VT323", ui-monospace, Menlo, monospace;
+  --led: #9be15d;
+  --hard: 6px 6px 0 rgb(0 0 0 / .35);
   --box-w: 168px;
   --row: 334px;
+  --ezra-w: 230px;
+  --bubble-bottom: 236px;
+  --tail: 111px;
   color-scheme: light;
 }
-@media (max-width: 520px) { :root { --box-w: 146px; --row: 302px; } }
+@media (max-width: 520px) { :root { --box-w: 132px; --row: 284px; --ezra-w: 150px; --bubble-bottom: 156px; --tail: 69px; } }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--f-body);
   background-color: var(--wall);
@@ -43,6 +55,13 @@ body {
     repeating-linear-gradient(to bottom, var(--wall) 0 26px, var(--groove) 26px 29px);
 }
 button { font: inherit; }
+
+/* The store's UI kit, so every window plays like part of the same game: card-stock panels with an ink border and a hard
+   sprite shadow, arcade buttons that press down, a blinking ▶ menu cursor, and green LED type for anything on a screen. */
+.dlg { background: var(--plate); color: var(--ink); border: 3px solid var(--ink); border-radius: 10px; box-shadow: inset 0 0 0 3px #fffaf0, var(--hard); }
+.more { display: inline-block; margin-left: 6px; font-size: .75em; }
+@media (prefers-reduced-motion: no-preference) { .more { animation: blink 1s steps(1) infinite; } }
+@keyframes blink { 50% { opacity: 0; } }
 
 /* The store sign */
 header { padding: 26px max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right)); }
@@ -58,22 +77,26 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(2
 .sign-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 @media (max-width: 700px) { .sign-side { align-items: flex-start; } }
 .waiting {
-  font: 400 .9rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 6px;
-  background: var(--game); color: #fff; text-decoration: none;
+  font: 400 .9rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 7px;
+  background: var(--game); color: #fff; text-decoration: none; box-shadow: 0 4px 0 var(--ink);
 }
 .waiting:focus-visible, .aisles button:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
 .aisles { display: flex; flex-wrap: wrap; gap: 8px; }
 .aisles button {
-  font: 400 .85rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 6px;
-  background: var(--plate); color: var(--ink); cursor: pointer;
+  font: 400 .85rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 7px;
+  background: var(--plate); color: var(--ink); cursor: pointer; box-shadow: 0 4px 0 var(--ink); transition: translate .08s, box-shadow .08s;
 }
-.aisles button[aria-pressed="true"] { background: var(--ink); color: var(--plate); }
+.aisles button[aria-pressed="true"] { background: var(--ink); color: var(--plate); translate: 0 3px; box-shadow: 0 1px 0 var(--ink); }
 
 /* Aisles and shelves */
-main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-inset-left)) 70px max(16px, env(safe-area-inset-right)); }
-.aisle { margin-top: 30px; }
+main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-inset-left)) calc(var(--bubble-bottom) + 40px) max(16px, env(safe-area-inset-right)); }
+.aisle { position: relative; margin-top: 30px; }
+.aisle::before { /* the ceiling light over each aisle */
+  content: ""; position: absolute; inset: -90px 0 auto; height: 440px; pointer-events: none;
+  background: radial-gradient(ellipse 42% 32% at 50% 44%, rgb(255 246 214 / .12), transparent);
+}
 .aisle-sign { display: flex; justify-content: center; position: relative; padding-top: 22px; margin-bottom: 4px; }
-.aisle-sign::before, .aisle-sign::after { content: ""; position: absolute; top: 0; height: 24px; width: 2px; background: rgb(0 0 0 / .45); }
+.aisle-sign::before, .aisle-sign::after { content: ""; position: absolute; top: 0; height: 24px; width: 3px; background: repeating-linear-gradient(to bottom, #8a8375 0 4px, transparent 4px 6px); }
 .aisle-sign::before { left: calc(50% - 70px); } .aisle-sign::after { left: calc(50% + 68px); }
 .aisle-sign h2 {
   margin: 0; min-width: 190px; text-align: center; font: 400 1.35rem/1 var(--f-sign);
@@ -86,48 +109,135 @@ main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-
   grid-auto-rows: var(--row); column-gap: 22px;
   background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--row) - 24px),
     var(--maple) calc(var(--row) - 24px) calc(var(--row) - 6px), var(--maple-edge) calc(var(--row) - 6px) var(--row));
-  border-radius: 4px;
+  border-radius: 4px; box-shadow: 0 18px 16px -14px rgb(0 0 0 / .55);
+}
+/* Phones: each aisle is one rack you swipe along */
+@media (max-width: 520px) {
+  .shelf {
+    grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: var(--box-w); justify-content: start;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 22px; padding: 0 22px; scrollbar-width: none; overscroll-behavior-x: contain;
+  }
+  .shelf::-webkit-scrollbar { display: none; }
+  .item { scroll-snap-align: center; }
 }
 .item { display: flex; flex-direction: column; justify-content: flex-end; }
 
-/* The boxed copy: band, cover art, and stickers */
+/* The boxed copy: a real case with a front and a back. Hover turns it over; a click picks it up. */
+.item { perspective: 900px; }
 .case {
-  position: relative; display: flex; flex-direction: column; width: var(--box-w); aspect-ratio: 5 / 7; padding: 0;
-  color: #fff; text-align: left; cursor: pointer; border: 0; border-radius: 3px 5px 5px 3px; overflow: visible;
-  background: var(--ink); border-left: 7px solid var(--spine);
-  box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 6px 10px 14px rgb(0 0 0 / .45);
-  transform-origin: 50% 100%;
+  position: relative; display: block; width: var(--box-w); aspect-ratio: 5 / 7; padding: 0; border: 0; background: none;
+  color: #fff; text-align: left; cursor: pointer; transform-origin: 50% 100%; transform-style: preserve-3d;
 }
-.case.game { --spine: #7d1f1b; --band: var(--game); }
-.case.site { --spine: #1b3a66; --band: var(--site); }
-.case.app { --spine: #9c6c0e; --band: var(--app); }
-.case:focus-visible { outline: 3px solid var(--fix); outline-offset: 3px; }
-html:not(.motion) .case { transition: transform .3s ease-out; }
-html:not(.motion) .case:hover { transform: translateY(-10px) rotate(-1.5deg); }
-.art { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 0 0 5px 0; }
+.case.game, .held.game { --spine: #7d1f1b; --band: var(--game); }
+.case.site, .held.site { --spine: #1b3a66; --band: var(--site); }
+.case.app, .held.app { --spine: #9c6c0e; --band: var(--app); }
+.case:focus-visible, .pad .case:focus { outline: 3px solid var(--fix); outline-offset: 3px; }
+.flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.22, 1, .36, 1); }
+.case.turned .flip { transform: translateY(-16%) scale(1.75) rotateY(180deg); } /* up off the shelf to read the back */
+.item:has(.case.turned) { z-index: 6; }
+.face {
+  position: absolute; inset: 0; display: flex; flex-direction: column; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  border-radius: 3px 6px 6px 3px; border-left: 7px solid var(--spine); background: var(--ink); container-type: inline-size;
+  box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 6px 10px 14px rgb(0 0 0 / .45);
+}
+.face.front { color: #fff; }
+.face.back { transform: rotateY(180deg); background: var(--plate); color: var(--ink); }
+.front::after { /* the store lights sliding across the sleeve as you move over it */
+  content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s;
+  background: radial-gradient(circle at var(--mx, 30%) var(--my, 20%), rgb(255 255 255 / .26), transparent 45%);
+}
+.case:hover .front::after, .case:focus-visible .front::after, .pad .case:focus .front::after { opacity: 1; }
+.art { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 0 0 6px 0; }
 .art::after { /* the plastic sleeve catching the store lights */
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(115deg, rgb(255 255 255 / .22) 0 14%, transparent 34% 72%, rgb(255 255 255 / .08) 90%);
 }
-.band { background: var(--band); font: 400 .72rem/1 var(--f-sign); padding: 6px 8px 5px; letter-spacing: .04em; border-radius: 0 5px 0 0; }
-.case.app .band { color: var(--ink); }
+.band { background: var(--band); color: #fff; font: 400 clamp(.66rem, 4.4cqi, 1rem)/1 var(--f-sign); padding: .5em .7em .42em; letter-spacing: .04em; border-radius: 0 6px 0 0; }
+.app .band { color: var(--ink); }
 .art img { flex: 1; min-height: 0; width: 100%; object-fit: cover; object-position: top center; display: block; background: #2a2622; }
-.title { padding: 8px 9px 10px; font: 800 1.12rem/1.02 var(--f-cond); text-wrap: balance; background: linear-gradient(transparent, rgb(0 0 0 / .35)), var(--ink); }
+.title { padding: 8px 9px 10px; font: 800 clamp(1.05rem, 7cqi, 1.7rem)/1.02 var(--f-cond); text-wrap: balance; background: linear-gradient(transparent, rgb(0 0 0 / .35)), var(--ink); }
+/* The back cover: a screenshot, the pitch and the fine print, sized to the box it is printed on */
+.back .shot { display: block; width: calc(100% - 14px); margin: 7px 7px 0; aspect-ratio: 16 / 10; object-fit: cover; object-position: top center; border: 2px solid var(--ink); border-radius: 3px; background: #2a2622; }
+.back .blurb {
+  margin: 7px 8px 0; font: 600 clamp(.66rem, 5.4cqi, 1.02rem)/1.32 var(--f-body);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--lines, 5); overflow: hidden;
+}
+.held .back .blurb { --lines: 10; font-size: clamp(.95rem, 5.4cqi, 1.3rem); }
+.back .fine { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; padding: 6px 8px 8px; font: 700 clamp(.6rem, 4.2cqi, .9rem)/1.1 var(--f-cond); color: var(--muted); }
+.barcode { width: 34%; height: clamp(14px, 11cqi, 30px); background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 3px, var(--ink) 3px 4px, transparent 4px 7px); }
 .sticker {
-  position: absolute; top: 30px; right: -8px; width: 58px; height: 58px; border-radius: 50%; z-index: 1;
+  position: absolute; top: 15%; right: -8px; width: 35%; aspect-ratio: 1; border-radius: 50%; z-index: 1;
   display: grid; place-items: center; text-align: center; transform: rotate(12deg);
-  font: 800 .78rem/1 var(--f-cond); letter-spacing: .02em; text-transform: uppercase;
+  font: 800 clamp(.66rem, 4.6cqi, 1.1rem)/1 var(--f-cond); letter-spacing: .02em; text-transform: uppercase;
   box-shadow: 0 2px 4px rgb(0 0 0 / .4), inset 0 0 0 3px rgb(255 255 255 / .55);
 }
+/* Safari draws a face's rotated stickers through the back of the box, so they hide whenever the back is up */
+.case.turned .front :is(.sticker, .starburst), .held.back-up .front :is(.sticker, .starburst) { visibility: hidden; transition: visibility 0s .15s; }
 .sticker.pass { background: var(--pass); color: #fff; }
 .sticker.fix { background: var(--fix); color: var(--ink); }
 .sticker.call { background: var(--game); color: #fff; }
 .starburst {
-  position: absolute; left: -14px; bottom: 34px; width: 56px; height: 56px; z-index: 1;
-  display: grid; place-items: center; transform: rotate(-12deg); color: var(--ink); font: 400 .66rem/1 var(--f-sign);
+  position: absolute; left: -14px; bottom: 15%; width: 34%; aspect-ratio: 1; z-index: 1;
+  display: grid; place-items: center; transform: rotate(-12deg); color: var(--ink); font: 400 clamp(.6rem, 4cqi, .95rem)/1 var(--f-sign);
 }
 .starburst svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--fix); }
 .starburst span { position: relative; }
+
+/* Older titles, spine out */
+.spines {
+  list-style: none; margin: 4px 0 0; padding: 0 16px 24px; min-height: 236px;
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px 3px; box-shadow: 0 18px 16px -14px rgb(0 0 0 / .55);
+  background: linear-gradient(to bottom, transparent calc(100% - 24px), var(--maple) calc(100% - 24px) calc(100% - 6px), var(--maple-edge) calc(100% - 6px));
+}
+.spine {
+  --band: var(--game); width: 38px; max-height: 210px; padding: 34px 0 10px; border: 0; border-radius: 2px; cursor: pointer; color: #fff;
+  background: linear-gradient(var(--band) 0 26px, var(--ink) 26px); box-shadow: inset 2px 0 0 rgb(255 255 255 / .16), 3px 6px 10px rgb(0 0 0 / .4);
+  writing-mode: vertical-rl; font: 800 1rem/1 var(--f-cond); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: transform .2s cubic-bezier(.22, 1, .36, 1);
+}
+.spine.site { --band: var(--site); } .spine.app { --band: var(--app); }
+.spine:hover, .spine:focus-visible, .pad .spine:focus { transform: translateY(-8px); }
+.spine:focus-visible, .pad .spine:focus { outline: 3px solid var(--fix); outline-offset: 2px; }
+
+/* A TV set: the generated cabinet with the picture behind its glass, and knobs that really turn. The positions are
+   measured from art/tv.webp, so both sets (the one on the counter and the one you play on) share them. */
+.set { position: relative; container-type: inline-size; filter: drop-shadow(0 22px 26px rgb(0 0 0 / .45)); }
+.set > img { position: relative; z-index: 1; display: block; width: 100%; height: auto; pointer-events: none; }
+.glass { position: absolute; left: 7.5%; top: 10.6%; width: 67.7%; height: 69.2%; padding: 0; border: 0; overflow: hidden; background: #0d0f0e; color: inherit; }
+button.glass { cursor: pointer; }
+.glass > img, .glass > iframe { display: block; width: 100%; height: 100%; border: 0; object-fit: cover; object-position: top center; background: #000; }
+.glass > canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; image-rendering: pixelated; opacity: 0; pointer-events: none; }
+.glass::after { /* scanlines and the curve of the tube */
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / .18) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 62%, rgb(0 0 0 / .45));
+}
+#tv-set .glass::after { background: repeating-linear-gradient(to bottom, rgb(0 0 0 / .06) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 72%, rgb(0 0 0 / .3)); }
+.set.off .glass > img, .set.off .glass > iframe { visibility: hidden; }
+.osd { position: absolute; z-index: 2; top: 6%; left: 6%; margin: 0; font: 400 clamp(1rem, 6cqi, 2.6rem)/1 var(--f-led); color: var(--led); letter-spacing: .04em; pointer-events: none; opacity: 0; }
+.crt { position: absolute; inset: 0; z-index: 3; background: #f4f8f2; pointer-events: none; }
+.knob {
+  position: absolute; z-index: 2; width: 16%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; padding: 0; border: 0; cursor: grab;
+  background: url(art/tv.webp) no-repeat; background-size: 625% auto; transition: rotate .25s cubic-bezier(.22, 1, .36, 1); touch-action: none;
+}
+.knob:active { cursor: grabbing; }
+.knob.ch { left: 88.01%; top: 19.59%; background-position: 95.25% 11.71%; }
+.knob.vol { left: 88.01%; top: 41.89%; background-position: 95.25% 39.79%; }
+.power { position: absolute; z-index: 2; left: 88.01%; top: 79.82%; width: 7%; min-width: 34px; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; padding: 0; border: 0; background: none; cursor: pointer; }
+.set.off .power::after { /* the power light goes dark */
+  content: ""; position: absolute; left: 50%; top: 50%; width: 2.6cqi; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: #3b1714;
+}
+.knob:focus-visible, .power:focus-visible, button.glass:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
+.knob:hover, .power:hover { filter: brightness(1.12); }
+
+/* The counter TV: attract mode over the shelf */
+.demo { max-width: 1180px; margin: 24px auto 0; padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right)); }
+.demo-set { max-width: 940px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); gap: 28px; align-items: center; }
+@media (max-width: 700px) { .demo-set { grid-template-columns: 1fr; gap: 14px; } }
+.demo-caption { color: var(--plate); }
+.demo-caption .ch { margin: 0; font: 400 1.3rem/1 var(--f-led); letter-spacing: .06em; color: var(--led); }
+.demo-caption h2 { margin: 8px 0 8px; font: 400 clamp(1.5rem, 3.6vw, 2.25rem)/1.05 var(--f-sign); }
+.demo-caption p { margin: 0 0 18px; max-width: 46ch; line-height: 1.5; color: rgb(244 236 214 / .84); }
+.demo-caption .hint { margin: 14px 0 0; font-size: .85rem; color: rgb(244 236 214 / .62); }
 
 /* The price tag clipped to the shelf edge */
 .tag {
@@ -141,60 +251,172 @@ html:not(.motion) .case:hover { transform: translateY(-10px) rotate(-1.5deg); }
 .icon:hover, .icon:focus-visible { background: var(--plate); outline: none; }
 .icon svg { width: 15px; height: 15px; }
 
-/* The demo TV and the back of the box */
+/* Overlays: the store lights dim around whatever you're holding or playing */
 .overlay {
-  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; perspective: 1400px;
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; perspective: 1600px;
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-  background: rgb(12 10 8 / .8);
+  background: radial-gradient(ellipse at 50% 45%, rgb(12 10 8 / .62), rgb(12 10 8 / .9));
 }
-.overlay[hidden] { display: none; }
-.tv {
-  width: min(1000px, 100%); display: grid; grid-template-columns: 1fr auto; gap: 18px; padding: 22px;
-  background: var(--tv); border-radius: 26px; box-shadow: inset 0 2px 0 rgb(255 255 255 / .08), 0 30px 60px rgb(0 0 0 / .55);
-}
-.screen { position: relative; aspect-ratio: 16 / 10; border-radius: 18px / 24px; overflow: hidden; background: #0d0f0e; box-shadow: inset 0 0 0 6px #151311; }
-.screen iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; }
-.crt { position: absolute; inset: 0; background: #f4f8f2; pointer-events: none; }
-.controls { width: 110px; display: flex; flex-direction: column; align-items: center; gap: 16px; padding-top: 6px; }
-.knob { width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6d675f, #2f2b27 70%); box-shadow: 0 3px 6px rgb(0 0 0 / .5); position: relative; }
-.knob::after { content: ""; position: absolute; left: 23px; top: 6px; width: 4px; height: 14px; border-radius: 2px; background: #cfc7b8; }
-.knob + .knob::after { transform: rotate(60deg); transform-origin: 2px 19px; }
-.grille { width: 84px; height: 110px; background-image: radial-gradient(circle, #151311 2px, transparent 2.5px); background-size: 9px 9px; }
-.tv-bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--plate); }
+.tv-room { display: grid; justify-items: center; gap: 16px; width: min(1040px, 100%, calc((100dvh - 170px) * 880 / 684)); }
+.tv-room .set { width: 100%; }
+.tv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: min(760px, 100%); padding: 12px 14px; }
 .tv-bar h2 { margin: 0 auto 0 0; font: 400 1.15rem/1.1 var(--f-sign); }
-@media (max-width: 700px) { .tv { grid-template-columns: 1fr; padding: 12px; border-radius: 18px; } .controls { display: none; } }
+.tv-bar .hint { width: 100%; margin: 0; font-size: .85rem; color: var(--muted); }
+/* Holding a box: it comes off the shelf to you; drag it, or use Turn it over, to read the back */
+.hold-stage { display: grid; grid-template-columns: auto minmax(0, 380px); gap: 40px; align-items: center; max-height: 100%; }
+@media (max-width: 760px) { .hold-stage { grid-template-columns: 1fr; justify-items: center; gap: 22px; overflow: auto; padding-bottom: 12px; } }
+.held { position: relative; width: min(440px, 86vw, 60dvh); aspect-ratio: 5 / 7; transform-style: preserve-3d; cursor: grab; touch-action: pan-y; user-select: none; }
+.held:active { cursor: grabbing; }
+.held .face { box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 18px 26px 34px rgb(0 0 0 / .5); }
+.hold-info { position: relative; padding: 20px 22px 18px; width: min(400px, 100%); }
+.hold-info .kind { margin: 0; font: 400 1.15rem/1 var(--f-led); letter-spacing: .06em; color: var(--muted); }
+.hold-info h2 { margin: 6px 0 12px; font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.05 var(--f-sign); padding-right: 40px; }
+.hold-info .hint { margin: 14px 0 0; font-size: .85rem; color: var(--muted); }
+.specs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; padding: 0; list-style: none; }
+.specs li { font: 400 1.05rem/1 var(--f-led); padding: 5px 8px 4px; background: var(--ink); color: var(--led); border-radius: 4px; }
 .btn {
   display: inline-flex; align-items: center; gap: 6px; font: 800 .95rem/1 var(--f-cond); letter-spacing: .02em;
-  padding: 10px 14px 9px; border-radius: 5px; border: 3px solid var(--ink); background: var(--plate); color: var(--ink);
-  text-decoration: none; cursor: pointer;
+  padding: 10px 14px 9px; border-radius: 7px; border: 3px solid var(--ink); background: var(--plate); color: var(--ink);
+  text-decoration: none; cursor: pointer; box-shadow: 0 4px 0 var(--ink); transition: translate .08s, box-shadow .08s, background-color .15s;
 }
-.btn.primary { background: var(--ink); color: var(--plate); border-color: var(--plate); }
-.btn:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
+.btn:hover { background-color: #fffaf0; }
+.btn:active { translate: 0 3px; box-shadow: 0 1px 0 var(--ink); }
+.btn.primary { background-color: var(--game); color: #fff; }
+.btn.primary:hover { background-color: #c43a33; }
+.btn:focus-visible { outline: 3px solid var(--fix); outline-offset: 3px; }
 .btn svg { width: 16px; height: 16px; }
-.back {
-  position: relative; width: min(640px, 100%); max-height: 100%; overflow: auto; padding: 20px 24px 22px;
-  background: var(--plate); border-radius: 8px; box-shadow: 0 30px 60px rgb(0 0 0 / .55);
-}
-.back-band { height: 16px; margin: -20px -24px 16px; background: var(--band, var(--game)); }
-.back.game { --band: var(--game); } .back.site { --band: var(--site); } .back.app { --band: var(--app); }
-.back .kind { font: 400 .75rem/1 var(--f-sign); color: var(--muted); }
-.back h2 { margin: 6px 0 8px; font: 400 1.7rem/1.05 var(--f-sign); padding-right: 48px; }
-.back .pitch { margin: 0; font-size: 1.02rem; line-height: 1.5; max-width: 60ch; }
-.shots { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; margin: 16px 0; }
-.shots img { display: block; width: 100%; border: 3px solid var(--ink); border-radius: 4px; background: #222; }
-.shots img.phone { width: 92px; }
-.specs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
-.specs li { font: 700 .92rem/1 var(--f-cond); padding: 7px 9px 6px; border: 2px solid var(--ink); border-radius: 4px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px 8px; }
 .close { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; }
 .close svg { width: 20px; height: 20px; }
 
 /* Empty shelves */
-.closed { max-width: 460px; margin: 46px auto 0; background: var(--plate); border: 4px solid var(--ink); border-radius: 8px; padding: 22px 24px; }
+.closed { max-width: 560px; margin: 46px auto 0; background: var(--plate); border: 4px solid var(--ink); border-radius: 10px; padding: 22px 24px; box-shadow: inset 0 0 0 3px #fffaf0, var(--hard);
+  display: grid; grid-template-columns: 1fr 120px; gap: 0 20px; align-items: center; }
+.closed > * { grid-column: 1; }
+.closed > img { grid-column: 2; grid-row: 1 / span 9; width: 100%; height: auto; rotate: 4deg; }
+@media (max-width: 520px) { .closed { grid-template-columns: 1fr 84px; } }
 .closed h2 { margin: 0; font: 400 1.5rem/1.1 var(--f-sign); color: var(--game); }
 .closed p { margin: 10px 0; color: var(--muted); }
 .closed code { display: block; margin: 6px 0; padding: 7px 9px; background: rgb(28 25 21 / .08); border-radius: 4px; font: .84rem/1.3 ui-monospace, Menlo, monospace; color: var(--ink); }
-@media (prefers-reduced-motion: reduce) { html:not(.motion) .case, html:not(.motion) .case:hover { transition: none; transform: none; } }
+/* Ezra, the clerk behind the register: the way in to everything the factory does */
+.ezra {
+  position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: 0; z-index: 14; width: var(--ezra-w);
+  padding: 0; border: 0; background: none; color: var(--plate); cursor: pointer;
+}
+.ezra { display: grid; }
+.ezra img { grid-area: 1 / 1; display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 24px rgb(0 0 0 / .45)); }
+.ezra .f-wave, .ezra .f-busy { visibility: hidden; }
+.ezra[data-state="busy"] .f-busy { visibility: visible; }
+.ezra[data-state="busy"] .f-idle, .ezra[data-state="waiting"] .f-idle { visibility: hidden; }
+.ezra[data-state="waiting"] .f-wave { visibility: visible; }
+.ezra:not([data-state="busy"]):is(:hover, :focus-visible) .f-wave { visibility: visible; animation: none; }
+.ezra:not([data-state="busy"]):is(:hover, :focus-visible) .f-idle { visibility: hidden; animation: none; }
+.ezra:focus-visible { outline: 3px solid var(--fix); outline-offset: 4px; border-radius: 8px; }
+.ezra-alert { /* the "!" over his head when something is waiting on Brandon */
+  position: absolute; z-index: 1; left: calc(47% - 18px); top: -40px; width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 50%; border: 3px solid var(--ink); background: var(--fix); color: var(--ink);
+  font: 400 1.25rem/1 var(--f-sign); box-shadow: 0 4px 0 rgb(0 0 0 / .35);
+}
+.ezra[data-state="idle"] .ezra-alert { display: none; }
+.ezra[data-state="busy"] .ezra-alert { background: var(--plate); font-size: 1rem; }
+@media (prefers-reduced-motion: no-preference) {
+  /* hand up, hand down: a sprite wave, with the two frames always opposite each other */
+  .ezra[data-state="waiting"] .f-wave { animation: wave 1.6s steps(1) infinite; }
+  .ezra[data-state="waiting"] .f-idle { animation: rest 1.6s steps(1) infinite; }
+  .ezra[data-state="waiting"] .ezra-alert, .ezra[data-state="busy"] .ezra-alert { animation: bob 1.2s ease-in-out infinite; }
+}
+@keyframes wave { 0% { visibility: visible; } 60% { visibility: hidden; } }
+@keyframes rest { 0% { visibility: hidden; } 60% { visibility: visible; } }
+@keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
+
+/* His speech bubble: questions, conversations and the back room */
+.counter {
+  position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: var(--bubble-bottom); z-index: 15;
+  width: min(440px, calc(100vw - 24px)); height: min(620px, calc(100dvh - var(--bubble-bottom) - 40px));
+  display: flex; flex-direction: column; background: var(--plate); border: 4px solid var(--ink); border-radius: 18px;
+  box-shadow: inset 0 0 0 3px #fffaf0, 8px 8px 0 rgb(0 0 0 / .38); transform-origin: calc(100% - var(--tail)) 100%;
+}
+.counter::after { /* the tail, pointing down at Ezra */
+  content: ""; position: absolute; right: var(--tail); bottom: -13px; width: 22px; height: 22px; transform: rotate(45deg);
+  background: var(--plate); border: solid var(--ink); border-width: 0 4px 4px 0;
+}
+.counter.guest { height: auto; }
+.counter.guest .counter-head { justify-content: flex-end; padding-bottom: 0; border-bottom: 0; }
+.counter-head { position: relative; display: flex; align-items: center; gap: 8px; padding: 26px 14px 12px; border-bottom: 3px solid var(--ink); }
+.counter-head h2 { /* his name plate, like a dialogue box */
+  position: absolute; top: -20px; left: 14px; margin: 0; padding: 7px 12px 6px; border: 3px solid var(--ink); border-radius: 6px;
+  background: var(--game); color: #fff; font: 400 1rem/1 var(--f-sign); letter-spacing: .06em;
+}
+.counter-head .close { position: static; flex: none; }
+.ezra-line { margin: 0; font: 600 1.06rem/1.45 var(--f-body); }
+.tabs { display: flex; gap: 6px; flex: 1; }
+.tabs[hidden] { display: none; }
+@media (max-width: 520px) { .tabs button { font-size: .68rem; padding-inline: 4px; } }
+.tabs button { flex: 1; font: 400 .8rem/1 var(--f-sign); padding: 9px 8px 8px; border: 3px solid var(--ink); border-radius: 6px; background: var(--plate); color: var(--ink); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--plate); }
+.tabs button:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
+.counter-body { flex: 1; min-height: 0; overflow: auto; padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }
+.counter-body[hidden] { display: none; }
+.note { margin: 0; color: var(--muted); font-size: .92rem; }
+.question, .row-card { background: #fffdf6; border: 3px solid var(--ink); border-radius: 8px; padding: 12px 14px; display: grid; gap: 10px; box-shadow: 4px 4px 0 rgb(28 25 21 / .22); }
+.question .q-project { font: 400 .72rem/1 var(--f-sign); color: var(--muted); margin: 0; }
+.question h3 { margin: 0; font: 800 1.35rem/1.1 var(--f-cond); }
+.md { font-size: .95rem; line-height: 1.5; overflow-wrap: anywhere; }
+.md p, .md ul, .md ol, .md pre { margin: 0 0 8px; }
+.md ul, .md ol { padding-left: 1.2em; }
+.md code { font: .85em ui-monospace, Menlo, monospace; background: rgb(28 25 21 / .08); padding: 1px 4px; border-radius: 3px; }
+.md pre { background: var(--ink); color: var(--plate); padding: 10px; border-radius: 4px; overflow-x: auto; }
+.md pre code { background: none; padding: 0; color: inherit; }
+.md a { color: var(--site); }
+textarea {
+  width: 100%; min-height: 64px; resize: vertical; padding: 9px 10px; font: 1rem/1.4 var(--f-body); color: var(--ink);
+  background: #fffdf6; border: 3px solid var(--ink); border-radius: 7px; box-shadow: inset 3px 3px 0 rgb(28 25 21 / .08);
+}
+textarea:focus-visible, input:focus-visible { outline: 3px solid var(--fix); outline-offset: 1px; }
+input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); border: 2px solid var(--ink); border-radius: 5px; background: #fffdf6; color: var(--ink); }
+.btn.small { padding: 8px 11px 7px; font-size: .88rem; }
+.btn.go { background: var(--pass); color: #fff; border-color: var(--ink); }
+.btn.warn { background: var(--fix); }
+.btn:disabled { opacity: .5; cursor: progress; }
+.row-card { position: relative; cursor: pointer; text-align: left; font: inherit; color: inherit; grid-template-columns: 1fr auto; align-items: center; padding-left: 30px; }
+.row-card::before { /* the menu cursor */ content: "▶"; position: absolute; left: 10px; top: 50%; translate: 0 -50%; font-size: .8rem; opacity: 0; }
+.row-card:hover::before, .row-card:focus-visible::before { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) { .row-card:hover::before, .row-card:focus-visible::before { animation: blink .8s steps(1) infinite; } }
+.row-card strong { font: 800 1.1rem/1.1 var(--f-cond); }
+.row-card .note { grid-column: 1; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); grid-row: 1 / span 2; grid-column: 2; }
+.dot.working { background: var(--pass); }
+.thread-head { display: flex; align-items: center; gap: 8px; }
+.thread-head h3 { margin: 0; font: 800 1.25rem/1.1 var(--f-cond); }
+.messages { display: flex; flex-direction: column; gap: 8px; }
+.msg { max-width: 92%; padding: 9px 12px; border-radius: 8px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 rgb(28 25 21 / .18); }
+.msg.user { align-self: flex-end; background: var(--ink); color: var(--plate); white-space: pre-wrap; }
+.msg.agent { align-self: flex-start; background: #fffdf6; }
+.msg.tool { align-self: flex-start; border: 0; box-shadow: none; padding: 0 4px; color: var(--muted); font: 400 1.05rem/1.1 var(--f-led); }
+.msg.error { align-self: flex-start; border-color: var(--fail, #b3261e); color: #8f1d17; background: #fff3f1; }
+.working { color: var(--muted); font-size: .9rem; }
+.composer { display: grid; gap: 8px; position: sticky; bottom: -18px; padding: 10px 0 0; background: var(--plate); }
+.composer-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.toast { /* Ezra's quick lines, in a small bubble over his head */
+  position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: var(--bubble-bottom); z-index: 30;
+  min-width: 210px; max-width: min(320px, calc(100vw - 24px)); padding: 12px 14px; border: 3px solid var(--ink); border-radius: 14px;
+  background: var(--plate); color: var(--ink); font: 700 1.02rem/1.25 var(--f-cond); box-shadow: var(--hard);
+}
+.toast::after {
+  content: ""; position: absolute; right: var(--tail); bottom: -10px; width: 16px; height: 16px; transform: rotate(45deg);
+  background: var(--plate); border: solid var(--ink); border-width: 0 3px 3px 0;
+}
+.toast[hidden] { display: none; }
+.toast.action { cursor: pointer; }
+.status { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.status li { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; background: #fffdf6; border: 3px solid var(--ink); border-radius: 8px; padding: 10px 12px; box-shadow: 4px 4px 0 rgb(28 25 21 / .22); }
+.status li .dot { grid-row: 1 / span 2; grid-column: 1; }
+.status li .dot.warn { background: var(--fix); }
+.status strong { font: 800 1.05rem/1.1 var(--f-cond); }
+.status .note { grid-column: 2; }
+.status .btn { grid-column: 2; justify-self: start; margin-top: 6px; }
+.counter-body h3 { margin: 6px 0 0; font: 400 .85rem/1 var(--f-sign); color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .flip, .knob, .btn { transition: none; } }
 </style>
 </head>
 <body>
@@ -215,13 +437,38 @@ html:not(.motion) .case:hover { transform: translateY(-10px) rotate(-1.5deg); }
     </div>
   </div>
 </header>
+<section class="demo" id="demo" hidden aria-labelledby="demo-title">
+  <div class="demo-set">
+    <div class="set on" id="demo-set">
+      <button type="button" class="glass" id="demo-screen"><canvas width="96" height="60" aria-hidden="true"></canvas><span class="osd" aria-hidden="true"></span><span class="crt" hidden></span></button>
+      <img src="art/tv.webp" alt="" width="880" height="684">
+      <button type="button" class="knob ch" title="Channel: turn it, or click its right or left side" aria-label="Channel"></button>
+      <button type="button" class="knob vol" title="Volume: turn it, or click its right or left side" aria-label="Volume" role="slider" aria-valuemin="0" aria-valuemax="10"></button>
+      <button type="button" class="power" title="Power" aria-label="Power"></button>
+    </div>
+    <div class="demo-caption">
+      <p class="ch" id="demo-ch"></p>
+      <h2 id="demo-title"></h2>
+      <p id="demo-pitch"></p>
+      <div class="actions">
+        <button type="button" class="btn primary" id="demo-play"></button>
+      </div>
+      <p class="hint">The knobs work: turn them, or click their right or left side. Top is the channel, bottom the volume, and the red light is the power.</p>
+    </div>
+  </div>
+</section>
 <main id="store" aria-live="polite"></main>
 
 <div class="overlay" id="tv" hidden>
-  <div class="tv" role="dialog" aria-modal="true" aria-labelledby="tv-title">
-    <div class="screen"><iframe id="tv-frame" title="Game or app" allow="autoplay; fullscreen; gamepad"></iframe><div class="crt" hidden></div></div>
-    <div class="controls" aria-hidden="true"><div class="knob"></div><div class="knob"></div><div class="grille"></div></div>
-    <div class="tv-bar">
+  <div class="tv-room" role="dialog" aria-modal="true" aria-labelledby="tv-title">
+    <div class="set on" id="tv-set">
+      <div class="glass"><iframe id="tv-frame" title="Game or app" allow="autoplay; fullscreen; gamepad"></iframe><p class="osd" aria-live="polite"></p><div class="crt" hidden></div></div>
+      <img src="art/tv.webp" alt="" width="880" height="684">
+      <button type="button" class="knob ch" title="Channel: turn it, or click its right or left side" aria-label="Channel"></button>
+      <button type="button" class="knob vol" title="Volume: turn it, or click its right or left side" aria-label="Volume" role="slider" aria-valuemin="0" aria-valuemax="10"></button>
+      <button type="button" class="power" title="Power" aria-label="Power"></button>
+    </div>
+    <div class="tv-bar dlg">
       <h2 id="tv-title"></h2>
       <button type="button" class="btn" id="tv-full">Full screen</button>
       <a class="btn" id="tv-open" target="_blank" rel="noopener">Open in a new tab</a>
@@ -230,21 +477,45 @@ html:not(.motion) .case:hover { transform: translateY(-10px) rotate(-1.5deg); }
   </div>
 </div>
 
-<div class="overlay" id="back" hidden>
-  <article class="back" role="dialog" aria-modal="true" aria-labelledby="back-title">
-    <div class="back-band" aria-hidden="true"></div>
-    <button type="button" class="icon close" id="back-close" aria-label="Put the box back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
-    <span class="kind" id="back-kind"></span>
-    <h2 id="back-title"></h2>
-    <p class="pitch" id="back-pitch"></p>
-    <div class="shots" id="back-shots"></div>
-    <ul class="specs" id="back-specs"></ul>
-    <div class="actions" id="back-actions"></div>
-  </article>
+<div class="overlay hold" id="hold" hidden>
+  <div class="hold-stage" role="dialog" aria-modal="true" aria-labelledby="hold-title">
+    <div class="held" id="held"></div>
+    <div class="hold-info dlg">
+      <button type="button" class="icon close" id="hold-close" aria-label="Put it back on the shelf"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+      <p class="kind" id="hold-kind"></p>
+      <h2 id="hold-title"></h2>
+      <ul class="specs" id="hold-specs"></ul>
+      <div class="actions" id="hold-actions"></div>
+      <p class="hint">Drag the box to turn it over, or press ← →.</p>
+    </div>
+  </div>
 </div>
+
+<button type="button" class="ezra" id="ezra" data-state="idle" aria-label="Ezra, the clerk">
+  <span class="ezra-alert" id="ezra-alert" aria-hidden="true"></span>
+  <img class="f-idle" src="art/ezra-1.webp" alt="" width="460" height="452">
+  <img class="f-wave" src="art/ezra-2.webp" alt="" width="460" height="452">
+  <img class="f-busy" src="art/ezra-3.webp" alt="" width="460" height="452">
+</button>
+<aside class="counter" id="counter" hidden aria-labelledby="counter-title">
+  <div class="counter-head">
+    <h2 id="counter-title">Ezra</h2>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" aria-controls="tab-questions" id="tab-q">Your call</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="tab-talk" id="tab-t">Talk</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="tab-room" id="tab-r">Back room</button>
+    </div>
+    <button type="button" class="icon close" id="counter-close" aria-label="Close Ezra's bubble"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+  </div>
+  <div class="counter-body" id="tab-questions" role="tabpanel" aria-labelledby="tab-q"></div>
+  <div class="counter-body" id="tab-talk" role="tabpanel" aria-labelledby="tab-t" hidden></div>
+  <div class="counter-body" id="tab-room" role="tabpanel" aria-labelledby="tab-r" hidden></div>
+</aside>
+<div class="toast" id="toast" role="status" hidden></div>
 
 <template id="closed">
   <div class="closed">
+    <img src="art/coming-soon.webp" alt="" width="360" height="506">
     <h2>Shelves get stocked soon</h2>
     <p>Every build lands here after its check. Bring an idea to the Claude app and talk it through, or start one by hand:</p>
     <code>npm run new moth-light game</code>
@@ -253,6 +524,7 @@ html:not(.motion) .case:hover { transform: translateY(-10px) rotate(-1.5deg); }
 </template>
 <template id="soon">
   <div class="closed">
+    <img src="art/coming-soon.webp" alt="" width="360" height="506">
     <h2>New titles on the way</h2>
     <p>Games and web apps from ForgynGames land here as they ship. Each one is a single file you can play right here or take home.</p>
   </div>
@@ -272,7 +544,6 @@ const el = (tag, props = {}, ...children) => {
   return e;
 };
 const ICONS = {
-  flip: '<path d="M2.5 8a5.5 5.5 0 0 1 9.6-3.7M13.5 8a5.5 5.5 0 0 1-9.6 3.7M12.5 1.5v3h-3M3.5 14.5v-3h3"/>',
   download: '<path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M3 13.5h10"/>',
   play: '<path d="M4.5 2.5v11l9-5.5z"/>',
 };
@@ -302,33 +573,67 @@ const store = () => data.mode === 'store';
 const stamp = (item) => Date.parse(item.checkedAt ?? item.shippedAt);
 const isNew = (item) => Date.now() - (item.addedAt ? Date.parse(item.addedAt) : stamp(item)) < (store() ? 7 : 1) * 86400e3;
 const hrefOf = (item) => item.href ?? (store() ? `${item.name}/` : `${item.name}.html`);
-const calls = (item) => inbox.filter((issue) => issue.title.toLowerCase().startsWith(`${item.name}:`));
+const slug = (text) => text.trim().toLowerCase().replace(/\s+/g, '-');
+const calls = (item) => inbox.filter((issue) => issue.title.includes(':') && slug(issue.title.split(':')[0]) === item.name);
 const art = (item) => `${item.cover ? 'covers' : 'thumbs'}/${item.name}.png?${stamp(item)}`;
 const download = (item) => (store() ? `${item.name}/index.html` : `${item.name}.html`);
 
-function box(item) {
-  const caseButton = el('button', { type: 'button', className: `case ${item.kind}` },
+// The front and the back of a box, printed the same way on the shelf and in your hands.
+const fallback = (e) => { e.target.onerror = null; e.target.src = 'art/coming-soon.webp'; };
+function frontFace(item) {
+  const face = el('span', { className: 'face front' },
     el('span', { className: 'band' }, LABEL[item.kind] ?? item.kind),
-    el('span', { className: 'art' }, el('img', { src: art(item), alt: '', loading: 'lazy' }),
+    el('span', { className: 'art' }, el('img', { src: art(item), alt: '', loading: 'lazy', onerror: fallback }),
       ...(item.cover ? [] : [el('span', { className: 'title' }, item.title)])));
-  caseButton.setAttribute('aria-label', `Play ${item.title}`);
-  caseButton.addEventListener('click', () => openTV(item, caseButton));
   if (!store()) {
     const waiting = calls(item).length;
     const ok = item.problems === 0;
-    caseButton.append(el('span', { className: `sticker ${waiting ? 'call' : ok ? 'pass' : 'fix'}` },
+    face.append(el('span', { className: `sticker ${waiting ? 'call' : ok ? 'pass' : 'fix'}` },
       waiting ? 'Your call' : ok ? 'Checked' : `${item.problems} to fix`));
   }
-  if (isNew(item)) caseButton.append(el('span', { className: 'starburst', innerHTML: STAR }, el('span', {}, 'New')));
+  if (isNew(item)) face.append(el('span', { className: 'starburst', innerHTML: STAR }, el('span', {}, 'New')));
+  return face;
+}
+function backFace(item) {
+  return el('span', { className: 'face back' },
+    el('span', { className: 'band' }, item.title),
+    el('img', { className: 'shot', src: `thumbs/${item.name}.png?${stamp(item)}`, alt: '', loading: 'lazy', onerror: fallback }),
+    el('span', { className: 'blurb' }, item.summary || 'No pitch written yet.'),
+    el('span', { className: 'fine' },
+      el('span', {}, `${item.kb} KB · one file`, el('br'), store() ? `Shipped ${short(item.shippedAt)}` : `Checked ${short(item.checkedAt)}`),
+      el('span', { className: 'barcode' })));
+}
 
-  const flip = el('button', { type: 'button', className: 'icon', title: 'See the back of the box', innerHTML: icon('flip') });
-  flip.setAttribute('aria-label', `See the back of ${item.title}`);
-  flip.addEventListener('click', () => openBack(item, flip));
+function box(item) {
+  const caseButton = el('button', { type: 'button', className: `case ${item.kind}` }, el('span', { className: 'flip' }, frontFace(item), backFace(item)));
+  caseButton.setAttribute('aria-label', `${item.title}: pick it up`);
+  caseButton.addEventListener('click', () => pickUp(item, caseButton));
+  caseButton.addEventListener('pointermove', (e) => {
+    const r = caseButton.getBoundingClientRect();
+    caseButton.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+    caseButton.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+  });
+  // Resting the mouse on a box turns it over to its back, after a beat, so sweeping across the shelf doesn't spin everything.
+  let turnTimer;
+  caseButton.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') turnTimer = setTimeout(() => caseButton.classList.add('turned'), 380); });
+  caseButton.addEventListener('pointerleave', () => { clearTimeout(turnTimer); caseButton.classList.remove('turned'); });
   const save = el('a', { className: 'icon', href: download(item), download: `${item.name}.html`, title: 'Download', innerHTML: icon('download') });
   save.setAttribute('aria-label', `Download ${item.title}`);
   const tag = el('p', { className: 'tag' }, el('strong', {}, `${item.kb} KB`),
-    el('time', { dateTime: item.shippedAt ?? item.checkedAt }, short(item.shippedAt ?? item.checkedAt)), flip, save);
+    el('time', { dateTime: item.shippedAt ?? item.checkedAt }, short(item.shippedAt ?? item.checkedAt)), save);
   const li = el('li', { className: 'item' }, caseButton, tag);
+  li.dataset.name = item.name;
+  return li;
+}
+
+// Past the first eight in an aisle, older titles go spine out.
+const FACE_OUT = 8;
+function spine(item, i) {
+  const b = el('button', { type: 'button', className: `spine ${item.kind}` }, item.title);
+  b.style.height = `${190 + (i % 3) * 10}px`;
+  b.setAttribute('aria-label', `${item.title}: pick it up`);
+  b.addEventListener('click', () => pickUp(item, b));
+  const li = el('li', {}, b);
   li.dataset.name = item.name;
   return li;
 }
@@ -340,9 +645,13 @@ function render(arrive) {
     return;
   }
   const aisles = AISLES.filter(([a]) => (aisle === 'all' || aisle === a) && data.items.some((i) => aisleOf(i.kind) === a));
-  main.replaceChildren(...aisles.map(([a, title]) => el('section', { className: `aisle ${a}` },
-    el('div', { className: 'aisle-sign' }, el('h2', {}, title)),
-    el('ul', { className: 'shelf' }, ...data.items.filter((i) => aisleOf(i.kind) === a).map(box)))));
+  main.replaceChildren(...aisles.map(([a, title]) => {
+    const all = data.items.filter((i) => aisleOf(i.kind) === a);
+    const spines = el('ul', { className: 'spines' }, ...all.slice(FACE_OUT).map(spine));
+    spines.setAttribute('aria-label', `Older ${title.toLowerCase()}`);
+    return el('section', { className: `aisle ${a}` }, el('div', { className: 'aisle-sign' }, el('h2', {}, title)),
+      el('ul', { className: 'shelf' }, ...all.slice(0, FACE_OUT).map(box)), ...(all.length > FACE_OUT ? [spines] : []));
+  }));
 
   const items = [...main.querySelectorAll('.item')];
   const fresh = arrive === 'all' ? items : items.filter((li) => !seen?.has(li.dataset.name));
@@ -369,7 +678,7 @@ function updateSign(first) {
   const n = data.items.length;
   $('#store-name').textContent = store() ? 'ForgynGames' : 'Shelf';
   $('#tagline').textContent = store() ? 'Games and web apps · one file each, play anywhere' : 'Games · Web apps & sites, built on Ezra Mini';
-  document.title = store() ? 'ForgynGames' : 'Shelf · Ezra Mini';
+  document.title = `${!store() && inbox.length ? `(${inbox.length}) ` : ''}${store() ? 'ForgynGames' : 'Shelf · Ezra Mini'}`;
   const toFix = data.items.filter((i) => i.problems > 0).length;
   $('#summary').textContent = !n ? (store() ? 'Opening soon' : 'Open 24/7 on the home network')
     : store() ? `${n} title${n > 1 ? 's' : ''} on the shelf`
@@ -383,83 +692,437 @@ function updateSign(first) {
   if (first) animate($('#sign'), { opacity: [0, 1, 0.35, 1, 0.6, 1] }, { duration: 0.9, times: [0, 0.2, 0.3, 0.5, 0.6, 1] });
 }
 
-// The demo TV: plays the build in a CRT that powers on and off.
+// ── TV sets. Both share the cabinet art and the knobs: top knob for the channel, bottom knob for the volume, red light for power. ──
+const chName = (i) => String(i + 3).padStart(2, '0');
+let volume = 5;
+try { volume = Math.min(10, Math.max(0, Number(localStorage.getItem('tv-volume') ?? 5))); } catch { /* storage blocked: keep the default */ }
+const bars = () => `VOL ${'▮'.repeat(volume)}${'▯'.repeat(10 - volume)}`;
+let audio;
+// Channel static through the set's speaker, at its volume. Only ever after a click or a key, so browsers allow it.
+function hiss(ms = 240) {
+  if (!volume) return;
+  try {
+    audio ??= new AudioContext();
+    const n = Math.floor(audio.sampleRate * ms / 1000);
+    const buffer = audio.createBuffer(1, n, audio.sampleRate);
+    const d = buffer.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const source = audio.createBufferSource();
+    const gain = audio.createGain();
+    gain.gain.value = (volume / 10) * 0.12;
+    source.buffer = buffer;
+    source.connect(gain).connect(audio.destination);
+    source.start();
+  } catch { /* no audio on this device */ }
+}
+function osd(set, text) {
+  const o = set.querySelector('.osd');
+  o.textContent = text;
+  o.style.opacity = 1;
+  clearTimeout(o.timer);
+  o.timer = setTimeout(() => { o.style.opacity = 0; }, 1600);
+}
+const setPower = (set, on) => { set.classList.toggle('on', on); set.classList.toggle('off', !on); };
+async function powerOn(set) {
+  setPower(set, true);
+  if (calm) return;
+  const crt = set.querySelector('.crt');
+  crt.hidden = false;
+  await animate(crt, { scaleX: [0, 1, 1], scaleY: [0.006, 0.006, 1], opacity: [1, 1, 1] }, { duration: 0.5, times: [0, 0.45, 1] });
+  await animate(crt, { opacity: [1, 0] }, { duration: 0.3 });
+  crt.hidden = true;
+}
+async function powerOff(set) {
+  if (!calm) {
+    const crt = set.querySelector('.crt');
+    crt.hidden = false;
+    await animate(crt, { opacity: [0, 1], scaleY: [1, 0.006], scaleX: [1, 1] }, { duration: 0.25 });
+    await animate(crt, { scaleX: [1, 0] }, { duration: 0.15 });
+    crt.hidden = true;
+  }
+  setPower(set, false);
+}
+async function flash(set) {
+  if (calm) return;
+  const crt = set.querySelector('.crt');
+  crt.hidden = false;
+  await animate(crt, { opacity: [0.9, 0] }, { duration: 0.25 });
+  crt.hidden = true;
+}
+// Games on the TV hear the volume knob: LittleJS games through setSoundVolume, anything else through its media elements.
+function applyVolume() {
+  try {
+    const w = frame.contentWindow;
+    w?.setSoundVolume?.((volume / 10) * 0.6);
+    w?.document.querySelectorAll('audio, video').forEach((m) => { m.volume = volume / 10; });
+  } catch { /* a page from another site: its volume is its own */ }
+}
+const VOL_DEG = (v) => -135 + v * 27; // 0 at the far left, 10 at the far right, like a real volume pot
+function wireSet(set, { channel, power }) {
+  const [ch, vol] = set.querySelectorAll('.knob');
+  let chDeg = 0;
+  const showVolume = () => { vol.style.rotate = `${VOL_DEG(volume)}deg`; vol.setAttribute('aria-valuenow', volume); vol.setAttribute('aria-valuetext', `${volume} of 10`); };
+  showVolume();
+  set.showVolume = showVolume;
+  const tuneBy = (d) => {
+    if (!set.classList.contains('on')) return;
+    chDeg += d * 30;
+    ch.style.rotate = `${chDeg}deg`;
+    hiss();
+    channel(d);
+  };
+  const loud = (d) => {
+    if (!set.classList.contains('on')) return;
+    const next = Math.min(10, Math.max(0, volume + d));
+    if (next !== volume) {
+      volume = next;
+      try { localStorage.setItem('tv-volume', volume); } catch { /* storage blocked */ }
+      applyVolume();
+      for (const s of [demoSet, tvSet]) s.showVolume?.();
+    }
+    osd(set, bars());
+  };
+  // Turn a knob by dragging around it (one step per notch), clicking its right or left side, the wheel, or the arrow keys.
+  for (const [knob, step, notch] of [[ch, tuneBy, 30], [vol, loud, 27]]) {
+    let grab = null;
+    const angleAt = (e, c) => Math.atan2(e.clientY - c.y, e.clientX - c.x) * 180 / Math.PI;
+    knob.addEventListener('pointerdown', (e) => {
+      const r = knob.getBoundingClientRect();
+      const c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      grab = { c, last: angleAt(e, c), turned: 0, moved: false };
+      knob.setPointerCapture(e.pointerId);
+    });
+    knob.addEventListener('pointermove', (e) => {
+      if (!grab) return;
+      const a = angleAt(e, grab.c);
+      const delta = ((a - grab.last + 540) % 360) - 180;
+      grab.last = a;
+      grab.turned += delta;
+      if (Math.abs(grab.turned) > 6) grab.moved = true;
+      while (Math.abs(grab.turned) >= notch) { step(Math.sign(grab.turned)); grab.turned -= Math.sign(grab.turned) * notch; }
+    });
+    knob.addEventListener('pointerup', (e) => {
+      if (grab && !grab.moved) step(e.clientX < grab.c.x ? -1 : 1);
+      grab = null;
+    });
+    knob.addEventListener('pointercancel', () => { grab = null; });
+    knob.addEventListener('click', (e) => { if (e.detail === 0) step(1); }); // Enter or Space
+    knob.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (performance.now() - (knob.lastTurn ?? 0) < 160) return;
+      knob.lastTurn = performance.now();
+      step(e.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
+    knob.addEventListener('keydown', (e) => {
+      const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+      if (d) { e.preventDefault(); step(d); }
+    });
+  }
+  set.querySelector('.power').addEventListener('click', power);
+}
+
+// The counter TV: cycles through the shelf in attract mode, with channel static between titles.
+const demo = $('#demo');
+const demoSet = $('#demo-set');
+let channel = 0;
+let demoTimer;
+let demoImg;
+const demoItem = () => data.items[channel];
+function tune(n, quiet) {
+  const items = data.items;
+  demo.hidden = !items.length;
+  if (!items.length) return;
+  channel = (n + items.length) % items.length;
+  const item = items[channel];
+  if (!quiet && !calm) staticBurst();
+  if (!demoImg) $('#demo-screen').prepend(demoImg = el('img', { alt: '' }));
+  demoImg.src = `thumbs/${item.name}.png?${stamp(item)}`;
+  $('#demo-ch').textContent = `CH ${chName(channel)} · Now showing`;
+  $('#demo-title').textContent = item.title;
+  $('#demo-pitch').textContent = item.summary || '';
+  $('#demo-play').innerHTML = `${icon('play')} ${item.kind === 'game' ? 'Play' : 'Try'} ${item.title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}`;
+  $('#demo-screen').setAttribute('aria-label', `Play ${item.title}`);
+  if (!quiet) osd(demoSet, `CH ${chName(channel)}`);
+  schedule();
+}
+// Changes channel on its own every 8 seconds, but never while you're looking at it, while it's off, or if you prefer less motion.
+function schedule() {
+  clearTimeout(demoTimer);
+  if (!calm && data.items.length > 1 && demoSet.classList.contains('on') && !demo.matches(':hover, :focus-within'))
+    demoTimer = setTimeout(() => tune(channel + 1), 8000);
+}
+function staticBurst() {
+  const c = demoSet.querySelector('canvas');
+  const g = c.getContext('2d');
+  const noise = g.createImageData(c.width, c.height);
+  const end = performance.now() + 380;
+  c.style.opacity = 1;
+  (function frame(t) {
+    for (let i = 0; i < noise.data.length; i += 4) {
+      noise.data[i] = noise.data[i + 1] = noise.data[i + 2] = Math.random() * 255;
+      noise.data[i + 3] = 255;
+    }
+    g.putImageData(noise, 0, 0);
+    if (t < end) requestAnimationFrame(frame);
+    else animate(c, { opacity: [1, 0] }, { duration: 0.25 });
+  })(performance.now());
+}
+async function demoPower() {
+  if (demoSet.classList.contains('on')) {
+    clearTimeout(demoTimer);
+    await powerOff(demoSet);
+    $('#demo-ch').textContent = 'The TV is off';
+  } else {
+    hiss(320);
+    await powerOn(demoSet);
+    tune(channel, true);
+    osd(demoSet, `CH ${chName(channel)}`);
+  }
+}
+wireSet(demoSet, { channel: (d) => tune(channel + d), power: demoPower });
+$('#demo-screen').addEventListener('click', (e) => (demoSet.classList.contains('on') ? openTV(demoItem(), e.currentTarget) : demoPower()));
+$('#demo-play').addEventListener('click', (e) => openTV(demoItem(), e.currentTarget));
+demo.addEventListener('pointerenter', () => clearTimeout(demoTimer));
+demo.addEventListener('focusin', () => clearTimeout(demoTimer));
+demo.addEventListener('pointerleave', schedule);
+demo.addEventListener('focusout', () => setTimeout(schedule));
+
+// Deep links: #play/<name> turns the TV on, #box/<name> takes that box off the shelf.
+const link = (kind, item) => history.replaceState(null, '', kind ? `#${kind}/${item.name}` : location.pathname + location.search);
+const onShelf = (item) => document.querySelector(`[data-name="${item.name}"] .case, [data-name="${item.name}"] .spine`);
+function follow() {
+  const [, kind, name] = location.hash.match(/^#(play|box)\/([\w-]+)$/) ?? [];
+  const item = data.items.find((i) => i.name === name);
+  if (!item) return;
+  if (kind === 'play') openTV(item, null);
+  else pickUp(item, onShelf(item));
+}
+addEventListener('hashchange', follow);
+
+// The TV you play on: the same set, bigger. Its channel knob changes the title, its power light turns it off.
 const tv = $('#tv');
-const crt = tv.querySelector('.crt');
+const tvSet = $('#tv-set');
 const frame = $('#tv-frame');
-async function openTV(item, from) {
-  returnFocus = from;
+let playing = null;
+frame.addEventListener('load', applyVolume);
+function play(item) {
+  playing = item;
   $('#tv-title').textContent = item.title;
   $('#tv-open').href = hrefOf(item);
   frame.title = item.title;
   frame.src = hrefOf(item);
+  link('play', item);
+}
+async function openTV(item, from) {
+  returnFocus = from;
+  play(item);
+  setPower(tvSet, false);
   tv.hidden = false;
   $('#tv-close').focus();
   animate(tv, { opacity: [0, 1] }, { duration: 0.2 });
-  animate(tv.querySelector('.tv'), { y: [90, 0], scale: [0.9, 1] }, spring(320, 26));
-  if (!calm) {
-    crt.hidden = false;
-    await animate(crt, { scaleX: [0, 1, 1], scaleY: [0.006, 0.006, 1], opacity: [1, 1, 1] }, { duration: 0.5, times: [0, 0.45, 1] });
-    await animate(crt, { opacity: [1, 0] }, { duration: 0.3 });
-    crt.hidden = true;
-  }
+  animate(tv.querySelector('.tv-room'), { y: [90, 0], scale: [0.9, 1] }, spring(320, 26));
+  await powerOn(tvSet);
   frame.focus();
 }
 async function closeTV() {
-  if (!calm) {
-    crt.hidden = false;
-    await animate(crt, { opacity: [0, 1], scaleY: [1, 0.006], scaleX: [1, 1] }, { duration: 0.25 });
-    await animate(crt, { scaleX: [1, 0] }, { duration: 0.15 });
-    await animate(tv, { opacity: [1, 0] }, { duration: 0.2 });
-    crt.hidden = true;
-  }
+  await powerOff(tvSet);
+  await animate(tv, { opacity: [1, 0] }, { duration: 0.2 });
   tv.hidden = true;
   frame.src = 'about:blank';
+  link();
   returnFocus?.focus();
 }
+wireSet(tvSet, {
+  channel: (d) => {
+    const items = data.items;
+    const next = items[(items.indexOf(playing) + d + items.length) % items.length];
+    flash(tvSet);
+    play(next);
+    osd(tvSet, `CH ${chName(items.indexOf(next))}`);
+  },
+  power: closeTV,
+});
 $('#tv-close').addEventListener('click', closeTV);
 $('#tv-full').addEventListener('click', () => frame.requestFullscreen?.());
 
-// The back of the box: the pitch, screenshots, scores and links.
-const back = $('#back');
-const card = back.querySelector('.back');
-function openBack(item, from) {
-  returnFocus = from;
-  card.className = `back ${item.kind}`;
-  $('#back-kind').textContent = LABEL[item.kind] ?? item.kind;
-  $('#back-title').textContent = item.title;
-  $('#back-pitch').textContent = item.summary || 'No pitch written yet.';
-  $('#back-shots').replaceChildren(
-    el('img', { src: `thumbs/${item.name}.png?${stamp(item)}`, alt: `${item.title} on a desktop screen` }),
-    el('img', { className: 'phone', src: `thumbs/${item.name}-phone.png?${stamp(item)}`, alt: `${item.title} on a phone` }));
-  const specs = [`${item.kb} KB, one file`, store() ? `Shipped ${when(item.shippedAt)}` : `Checked ${when(item.checkedAt)}`,
+// ── Holding a box: it comes off the shelf to you and leaves a gap. Drag it, or press ← →, to turn it over. ──
+const hold = $('#hold');
+const held = $('#held');
+let holding = null;
+let angle = 0;
+const turnTo = (deg, instant) => {
+  angle = deg;
+  const a = ((deg % 360) + 360) % 360;
+  held.classList.toggle('back-up', a > 90 && a < 270);
+  if (calm) held.style.transform = `rotateY(${deg}deg)`;
+  else M.animate(held, { rotateY: deg }, instant ? { duration: 0 } : spring(260, 26));
+};
+const showingBack = () => Math.abs(Math.round(angle / 180)) % 2 === 1;
+function pickUp(item, from, back = false) {
+  if (holding) return;
+  holding = { item, from };
+  held.className = `held ${item.kind}`;
+  held.replaceChildren(frontFace(item), backFace(item));
+  $('#hold-kind').textContent = `${(LABEL[item.kind] ?? item.kind).toUpperCase()} · ${item.kb} KB · ONE FILE`;
+  $('#hold-title').textContent = item.title;
+  const specs = [store() ? `Shipped ${when(item.shippedAt)}` : `Checked ${when(item.checkedAt)}`,
     ...(!store() && item.problems ? [`${item.problems} to fix`] : []),
     ...Object.entries(item.scores ?? {}).map(([k, v]) => `${k} ${v}`)];
-  $('#back-specs').replaceChildren(...specs.map((s) => el('li', {}, s)));
-  const play = el('button', { type: 'button', className: 'btn primary', innerHTML: `${icon('play')} Play` });
-  play.addEventListener('click', async () => { await closeBack(true); openTV(item, from); });
-  const links = [el('a', { className: 'btn', href: hrefOf(item), target: '_blank', rel: 'noopener' }, 'Open in a new tab'),
-    el('a', { className: 'btn', href: download(item), download: `${item.name}.html` }, 'Download')];
-  if (item.live?.pages && !store()) links.push(el('a', { className: 'btn', href: item.live.pages, target: '_blank', rel: 'noopener' }, 'Live on ForgynGames'));
-  if (item.live?.itch) links.push(el('a', { className: 'btn', href: item.live.itch, target: '_blank', rel: 'noopener' }, 'On itch.io'));
-  $('#back-actions').replaceChildren(play, ...links);
-  back.hidden = false;
-  $('#back-close').focus();
-  animate(back, { opacity: [0, 1] }, { duration: 0.2 });
-  animate(card, { rotateY: [-110, 0], opacity: [0, 1] }, spring(220, 24));
+  $('#hold-specs').replaceChildren(...specs.map((t) => el('li', {}, t)));
+  const button = (label, onClick, className = 'btn') => { const b = el('button', { type: 'button', className }, label); b.addEventListener('click', onClick); return b; };
+  const linkBtn = (label, href) => el('a', { className: 'btn', href, target: '_blank', rel: 'noopener' }, label);
+  const playBtn = el('button', { type: 'button', className: 'btn primary', innerHTML: `${icon('play')} ${item.kind === 'game' ? 'Play it' : 'Try it'} on the TV` });
+  playBtn.addEventListener('click', () => { letGo(); openTV(item, from); });
+  const actions = [playBtn, button('Turn it over', () => turnTo(angle + 180)),
+    el('a', { className: 'btn', href: download(item), download: `${item.name}.html` }, 'Take it home')];
+  if (hub.allowed && !store()) actions.push(button('Ask Ezra about it', () => {
+    letGo();
+    openCounter('talk');
+    openThread(hub.sessions.find((s) => s.project === item.name) ?? { title: item.title, project: item.name });
+  }));
+  if (item.live?.pages && !store()) actions.push(linkBtn('Live on ForgynGames', item.live.pages));
+  if (item.live?.itch) actions.push(linkBtn('On itch.io', item.live.itch));
+  actions.push(button('Copy link', async () => {
+    const url = `${location.origin}${location.pathname}#box/${item.name}`;
+    try {
+      if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ title: item.title, url });
+      else { await navigator.clipboard.writeText(url); toast('Link copied.'); }
+    } catch { /* the share sheet was closed */ }
+  }));
+  $('#hold-actions').replaceChildren(...actions);
+  hold.hidden = false;
+  link('box', item);
+  // Fly it from its spot on the shelf to your hands.
+  const b = held.getBoundingClientRect();
+  const a = from?.getBoundingClientRect();
+  if (from) from.style.visibility = 'hidden';
+  turnTo(0, true);
+  animate(hold, { opacity: [0, 1] }, { duration: 0.2 });
+  if (!calm) M.animate(held, a ? { x: [a.left + a.width / 2 - (b.left + b.width / 2), 0], y: [a.top + a.height / 2 - (b.top + b.height / 2), 0], scale: [a.width / b.width, 1] }
+    : { scale: [0.8, 1], opacity: [0, 1] }, spring(240, 24));
+  if (back) setTimeout(() => turnTo(180), calm ? 0 : 260);
+  animate(hold.querySelector('.hold-info'), { opacity: [0, 1], x: [30, 0] }, { duration: 0.3, delay: 0.12 });
+  playBtn.focus();
 }
-async function closeBack(keepFocus) {
-  await animate(card, { rotateY: [0, 110], opacity: [1, 0] }, { duration: 0.25 });
-  back.hidden = true;
-  if (!keepFocus) returnFocus?.focus();
+// Let go without flying back (to play it, or to talk about it).
+function letGo() {
+  hold.hidden = true;
+  if (!calm) M.animate(held, { x: 0, y: 0, scale: 1, opacity: 1 }, { duration: 0 });
+  turnTo(0, true);
+  if (holding?.from) holding.from.style.visibility = '';
+  holding = null;
 }
-$('#back-close').addEventListener('click', () => closeBack());
-for (const overlay of [tv, back]) overlay.addEventListener('click', (e) => e.target === overlay && (overlay === tv ? closeTV() : closeBack()));
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  if (!back.hidden) closeBack();
-  else if (!tv.hidden) closeTV();
+async function putBack() {
+  if (!holding) return;
+  const { from } = holding;
+  if (!calm && from?.isConnected) {
+    const a = from.getBoundingClientRect();
+    const b = held.getBoundingClientRect();
+    animate(hold.querySelector('.hold-info'), { opacity: [1, 0] }, { duration: 0.15 });
+    await M.animate(held, { x: a.left + a.width / 2 - (b.left + b.width / 2), y: a.top + a.height / 2 - (b.top + b.height / 2),
+      scale: a.width / b.width, rotateY: Math.round(angle / 360) * 360 }, { duration: 0.35, ease: [0.22, 1, 0.36, 1] });
+    from.style.visibility = '';
+    await animate(hold, { opacity: [1, 0] }, { duration: 0.12 });
+  }
+  letGo();
+  from?.focus();
+  link();
+}
+let drag = null;
+held.addEventListener('pointerdown', (e) => {
+  drag = { x: e.clientX, base: angle, moved: false };
+  held.setPointerCapture(e.pointerId);
 });
+held.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x;
+  if (Math.abs(dx) > 4) drag.moved = true;
+  if (drag.moved) turnTo(drag.base + dx * 0.8, true);
+});
+const endDrag = (e) => {
+  if (!drag) return;
+  if (!drag.moved && e.type === 'pointerup') turnTo(angle + 180);
+  else if (drag.moved) turnTo(Math.round(angle / 180) * 180);
+  drag = null;
+};
+held.addEventListener('pointerup', endDrag);
+held.addEventListener('pointercancel', endDrag);
+$('#hold-close').addEventListener('click', putBack);
+hold.addEventListener('click', (e) => { if (e.target === hold || e.target.classList.contains('hold-stage')) putBack(); });
+tv.addEventListener('click', (e) => e.target === tv && closeTV());
+
+function escape() {
+  if (!hold.hidden) putBack();
+  else if (!tv.hidden) closeTV();
+  else if (!counter.hidden) closeCounter();
+}
+// Browsing with the arrow keys or a controller: move to the nearest box in that direction.
+const boxes = () => [...document.querySelectorAll('.case, .spine')];
+function step(dx, dy) {
+  const all = boxes();
+  const from = document.activeElement;
+  if (!all.includes(from)) return all[0]?.focus();
+  const a = from.getBoundingClientRect();
+  let best = null;
+  let bestScore = Infinity;
+  for (const b of all) {
+    const r = b.getBoundingClientRect();
+    // How far past the current box's edge it starts, and how far off to the side its centre is.
+    const along = dx > 0 ? r.left - a.right : dx < 0 ? a.left - r.right : dy > 0 ? r.top - a.bottom : a.top - r.bottom;
+    const side = dx ? Math.abs(r.top + r.height / 2 - a.top - a.height / 2) : Math.abs(r.left + r.width / 2 - a.left - a.width / 2);
+    const score = along + 3 * side;
+    if (b !== from && along > -4 && score < bestScore) { best = b; bestScore = score; }
+  }
+  best?.focus();
+  best?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: calm ? 'auto' : 'smooth' });
+}
+const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') return escape();
+  const dir = ARROWS[e.key];
+  if (dir && !hold.hidden && dir[0]) {
+    e.preventDefault();
+    turnTo(angle + dir[0] * 180);
+    return;
+  }
+  const typing = e.target.closest?.('input, textarea, select, .counter, .knob');
+  if (!dir || typing || !tv.hidden || !hold.hidden || e.altKey || e.metaKey || e.ctrlKey) return;
+  e.preventDefault();
+  step(...dir);
+});
+const itemOf = (node) => data.items.find((i) => i.name === node?.closest?.('[data-name]')?.dataset.name);
+// Controller: D-pad or stick to browse, A picks a box up (A again plays it), Y turns it over, B puts it back,
+// X calls Ezra, Select turns the TV off. While a game is on, only Select is ours; every other button belongs to the game.
+const pressed = {};
+let padLoop = null;
+let nextMove = 0;
+function pad(t) {
+  const gp = [...navigator.getGamepads()].find(Boolean);
+  if (!gp) { padLoop = null; return; }
+  const down = (i) => Boolean(gp.buttons[i]?.pressed);
+  const press = (i) => { const was = pressed[i]; pressed[i] = down(i); return pressed[i] && !was; };
+  const [ax = 0, ay = 0] = gp.axes;
+  const dir = down(14) || ax < -0.5 ? [-1, 0] : down(15) || ax > 0.5 ? [1, 0] : down(12) || ay < -0.5 ? [0, -1] : down(13) || ay > 0.5 ? [0, 1] : null;
+  const [a, b, x, y, select] = [press(0), press(1), press(2), press(3), press(8)];
+  if (!tv.hidden) { if (select) closeTV(); }
+  else if (!hold.hidden) { if (a) $('#hold-actions .btn.primary')?.click(); if (b) putBack(); if (y) turnTo(angle + 180); }
+  else if (!counter.hidden) { if (b) closeCounter(); }
+  else {
+    if (!dir) nextMove = 0;
+    else if (t >= nextMove) { step(...dir); nextMove = t + (nextMove ? 160 : 320); }
+    if (a && boxes().includes(document.activeElement)) document.activeElement.click();
+    if (y && itemOf(document.activeElement)) pickUp(itemOf(document.activeElement), document.activeElement, true);
+    if (x) ezra.click();
+  }
+  padLoop = requestAnimationFrame(pad);
+}
+addEventListener('gamepadconnected', () => {
+  document.documentElement.classList.add('pad');
+  toast('Controller ready: D-pad to browse, A picks a box up, Y turns it over, X to talk to me, Select turns the TV off.');
+  if (!boxes().includes(document.activeElement)) boxes()[0]?.focus();
+  padLoop ??= requestAnimationFrame(pad);
+});
+addEventListener('mousedown', () => document.documentElement.classList.remove('pad'));
 
 document.querySelectorAll('.aisles button').forEach((button) => button.addEventListener('click', () => {
   aisle = button.dataset.aisle;
@@ -467,23 +1130,381 @@ document.querySelectorAll('.aisles button').forEach((button) => button.addEventL
   render('all');
 }));
 
-// Live restocking: new builds and new questions show up without a refresh.
+// ── The counter: answer questions and talk with the factory. Only shown when the hub says this is Brandon. ──
+let hub = { allowed: false, sessions: [], questions: [] };
+const api = async (path, payload) => {
+  const r = await fetch(path, payload ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) } : {});
+  const out = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(out.error || 'Something went wrong. Try again.');
+  return out;
+};
+let toastTimer;
+function toast(text, action) {
+  const t = $('#toast');
+  t.textContent = text;
+  t.classList.toggle('action', Boolean(action));
+  t.onclick = action ? () => { t.hidden = true; action(); } : null;
+  t.hidden = false;
+  animate(t, { y: [20, 0], opacity: [0, 1] }, spring());
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
+}
+
+// A small, safe markdown renderer: everything is escaped first, then a few patterns become tags.
+function md(text) {
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const out = [];
+  text.split(/```[^\n]*\n?/).forEach((part, i) => {
+    if (i % 2) return out.push(`<pre><code>${esc(part)}</code></pre>`);
+    for (const block of part.split(/\n{2,}/)) {
+      const lines = block.split('\n').filter((l) => l.trim());
+      if (!lines.length) continue;
+      if (lines.every((l) => /^\s*([-*]|\d+\.)\s/.test(l))) {
+        const tag = /^\s*\d+\./.test(lines[0]) ? 'ol' : 'ul';
+        out.push(`<${tag}>${lines.map((l) => `<li>${inline(l.replace(/^\s*([-*]|\d+\.)\s/, ''))}</li>`).join('')}</${tag}>`);
+      } else out.push(`<p>${lines.map(inline).join('<br>')}</p>`);
+    }
+  });
+  return out.join('');
+}
+
+const counter = $('#counter');
+let tab = 'questions';
+let thread = null;
+const projectTitle = (name) => data.items.find((i) => i.name === name)?.title ?? name;
+function openCounter(which = tab) {
+  $('.tabs').hidden = !hub.allowed;
+  counter.classList.toggle('guest', !hub.allowed);
+  if (hub.allowed) showTab(which);
+  else renderGuest();
+  if (counter.hidden) {
+    counter.hidden = false;
+    animate(counter, { opacity: [0, 1], scale: [0.85, 1], y: [20, 0] }, spring(380, 30));
+  }
+}
+async function closeCounter() {
+  await animate(counter, { opacity: [1, 0], scale: [1, 0.9], y: [0, 14] }, { duration: 0.18 });
+  counter.hidden = true;
+}
+const TABS = { questions: ['#tab-q', '#tab-questions'], talk: ['#tab-t', '#tab-talk'], room: ['#tab-r', '#tab-room'] };
+function showTab(which) {
+  tab = which;
+  for (const [name, [button, panel]] of Object.entries(TABS)) {
+    $(button).setAttribute('aria-selected', String(name === which));
+    $(panel).hidden = name !== which;
+  }
+  if (which === 'questions') renderQuestions();
+  else if (which === 'room') renderRoom();
+  else if (!thread) renderConversations();
+}
+$('#tab-q').addEventListener('click', () => showTab('questions'));
+$('#tab-t').addEventListener('click', () => { closeThread(); showTab('talk'); });
+$('#tab-r').addEventListener('click', () => showTab('room'));
+$('#counter-close').addEventListener('click', closeCounter);
+$('#waiting').addEventListener('click', (e) => { if (hub.allowed) { e.preventDefault(); openCounter('questions'); } });
+
+const CHOICES = (title) => (/ship\?/i.test(title) ? ['Ship it', 'Fix first', 'Not yet']
+  : /look\?/i.test(title) ? ['Looks right', 'Change the look', 'Start the look over']
+  : /fun\?|useful\?/i.test(title) ? ['Keep going', 'Change it', 'Shelve it'] : ['Yes', 'Change it', 'No']);
+function renderQuestions() {
+  const n = hub.questions.length;
+  $('#tab-questions').replaceChildren(el('p', { className: 'ezra-line' },
+    n ? `${n === 1 ? 'One thing needs' : `${n} things need`} your call.` : "Nothing's waiting on you right now. I'll wave when something is."),
+  ...hub.questions.map(questionCard));
+}
+function questionCard(q) {
+  const item = data.items.find((i) => i.name === q.project);
+  const [yes, change, no] = CHOICES(q.title);
+  const notes = el('textarea', { placeholder: `Notes for the agent (needed for "${change}")` });
+  notes.setAttribute('aria-label', `Notes on ${q.title}`);
+  const card = el('article', { className: 'question' });
+  const buttons = [['yes', yes, 'go'], ['change', change, 'warn'], ['no', no, '']].map(([decision, label, tone]) => {
+    const b = el('button', { type: 'button', className: `btn small ${tone}` }, label);
+    b.addEventListener('click', async () => {
+      if (decision === 'change' && !notes.value.trim()) { notes.focus(); return toast('Say what to change first.'); }
+      card.querySelectorAll('button').forEach((x) => { x.disabled = true; });
+      try {
+        const s = await api(`/api/questions/${q.number}`, { decision, notes: notes.value });
+        await animate(card, { x: [0, 80], opacity: [1, 0] }, { duration: 0.25 });
+        hub.questions = hub.questions.filter((x) => x.number !== q.number);
+        inbox = hub.questions;
+        updateSign();
+        toast('Sent. The agent is on it.');
+        openCounter('talk');
+        openThread(s);
+      } catch (e) {
+        toast(e.message);
+        card.querySelectorAll('button').forEach((x) => { x.disabled = false; });
+      }
+    });
+    return b;
+  });
+  const links = el('div', { className: 'actions' });
+  if (item) {
+    const play = el('button', { type: 'button', className: 'btn small', innerHTML: `${icon('play')} Play it` });
+    play.addEventListener('click', () => openTV(item, play));
+    links.append(play);
+  }
+  card.append(el('p', { className: 'q-project' }, q.project ? projectTitle(q.project) : 'The factory'),
+    el('h3', {}, q.title.split(':').slice(1).join(':').trim() || q.title),
+    el('div', { className: 'md', innerHTML: md(q.body || '') }), links, notes, el('div', { className: 'actions' }, ...buttons));
+  return card;
+}
+
+const FACTORY = { title: 'Ezra', factory: true };
+const factoryThread = (autoText) => openThread(hub.sessions.find((s) => s.factory) ?? FACTORY, autoText);
+const sessionTitle = (s) => (s.factory ? 'Ezra' : s.project ? projectTitle(s.project) : s.request ? hub.requests?.find((r) => r.number === s.request)?.title ?? s.title : s.title);
+function renderConversations() {
+  const idea = el('button', { type: 'button', className: 'btn primary small' }, 'New idea');
+  idea.addEventListener('click', () => openThread({ title: 'New idea' }));
+  const factory = el('button', { type: 'button', className: 'btn small' }, 'Talk to Ezra');
+  factory.addEventListener('click', () => factoryThread());
+  const request = el('button', { type: 'button', className: 'btn small' }, 'New client request');
+  request.addEventListener('click', openRequestForm);
+  const row = (title, note, dot, open) => {
+    const r = el('button', { type: 'button', className: 'row-card' }, el('strong', {}, title), el('span', { className: `dot ${dot}` }), el('span', { className: 'note' }, note));
+    r.addEventListener('click', open);
+    return r;
+  };
+  const requests = (hub.requests ?? []).map((r) => {
+    const s = hub.sessions.find((x) => x.request === r.number);
+    return row(r.title, `Client request #${r.number} · ${short(r.createdAt)} · ${s ? 'talking it through' : 'not started'}`, s?.status ?? '',
+      () => (s ? openThread(s) : openThread({ title: r.title }, `#${r.number}`)));
+  });
+  const talks = hub.sessions.filter((s) => !s.request).map((s) =>
+    row(sessionTitle(s), `${s.status === 'working' ? 'Working now' : 'Idle'} · ${short(s.updatedAt)}`, s.status, () => openThread(s)));
+  $('#tab-talk').replaceChildren(el('div', { className: 'actions' }, idea, factory, request),
+    ...(requests.length ? [el('h3', {}, 'Client requests'), ...requests] : []),
+    el('h3', {}, 'Conversations'),
+    ...(talks.length ? talks : [el('p', { className: 'note' }, 'No conversations yet. Bring an idea and talk it through.')]));
+}
+
+// The back room: is everything the factory leans on running and logged in?
+async function renderRoom() {
+  const panel = $('#tab-room');
+  if (!panel.childElementCount) panel.append(el('p', { className: 'note' }, 'Checking the back room…'));
+  let st;
+  try { st = await api('/api/status'); } catch (e) { return panel.replaceChildren(el('p', { className: 'note' }, e.message)); }
+  if (tab !== 'room') return;
+  const fix = (label, text) => {
+    const b = el('button', { type: 'button', className: 'btn small' }, label);
+    b.addEventListener('click', () => { showTab('talk'); factoryThread(text); });
+    return b;
+  };
+  const line = (good, title, note, action) => el('li', {}, el('span', { className: `dot ${good ? 'working' : 'warn'}` }),
+    el('strong', {}, title), el('span', { className: 'note' }, note), ...(action ? [action] : []));
+  const days = st.login ? Math.floor((Date.parse(st.login) - Date.now()) / 86400e3) : null;
+  const working = hub.sessions.filter((s) => s.status === 'working').length;
+  const last = data.items[0];
+  panel.replaceChildren(el('ul', { className: 'status' },
+    line(true, 'Hub', `Running since ${when(st.hubSince)}`),
+    line(true, 'Agents', `${working} working, ${hub.sessions.length - working} idle · up to 4 at once`),
+    line(st.remote, 'Remote Control', st.remote ? 'Running, for the Claude app and claude.ai' : 'Stopped. It restarts within 5 minutes.'),
+    line(days !== null && days > 7, 'Claude login', days === null ? 'Could not read the login' : `Good for ${days} more days`,
+      days !== null && days <= 7 ? fix('Renew it', 'Renew the Claude login: run `claude auth login` in tmux, show me the link, then wait for the code I paste back.') : null),
+    line(st.itch, 'itch.io', st.itch ? 'Logged in' : 'Not logged in. Needed the first time a game ships to itch.io.',
+      st.itch ? null : fix('Log in', 'Log butler into itch.io: run `butler login` in tmux and show me the link to approve.')),
+    line(true, 'Shelf', last ? `${data.items.length} in stock · last check ${when(last.checkedAt)}` : 'Empty'),
+    ...st.branches.map(([b, n]) => line(true, b, `${n} commit${n > 1 ? 's' : ''} not on main yet`))));
+}
+function openRequestForm() {
+  const title = el('input', { type: 'text', placeholder: 'Who is it for, and what do they want?' });
+  title.setAttribute('aria-label', 'Request title');
+  const details = el('textarea', { placeholder: 'Paste their message, links and anything they sent.' });
+  details.setAttribute('aria-label', 'Request details');
+  const file = el('button', { type: 'button', className: 'btn primary small' }, 'File it and talk it through');
+  const back = el('button', { type: 'button', className: 'btn small' }, 'Back');
+  back.addEventListener('click', renderConversations);
+  file.addEventListener('click', async () => {
+    file.disabled = true;
+    try {
+      const { url } = await api('/api/requests', { title: title.value, text: details.value });
+      openThread({ title: title.value.trim() }, `#${url.split('/').pop()}`);
+    } catch (e) {
+      toast(e.message);
+      file.disabled = false;
+    }
+  });
+  $('#tab-talk').replaceChildren(el('h3', {}, 'New client request'), title, details, el('div', { className: 'actions' }, file, back));
+  title.focus();
+}
+
+function closeThread() {
+  thread?.source?.close();
+  thread = null;
+}
+async function openThread(s, autoText) {
+  closeThread();
+  showTab('talk');
+  const messages = el('div', { className: 'messages' });
+  const working = el('p', { className: 'working', hidden: true }, 'Claude is working…');
+  const input = el('textarea', { placeholder: s.id ? 'Reply…' : s.project ? `What should change in ${projectTitle(s.project)}?`
+    : s.factory ? 'Anything about the factory itself: logins, services, how things are going.'
+    : 'Describe the idea: what it is, who it is for, how it should feel.' });
+  input.setAttribute('aria-label', 'Message');
+  const sendButton = el('button', { type: 'submit', className: 'btn primary small' }, 'Send');
+  const stop = el('button', { type: 'button', className: 'btn small', hidden: true }, 'Stop');
+  const form = el('form', { className: 'composer' }, input, el('div', { className: 'composer-actions' }, stop, sendButton));
+  const back = el('button', { type: 'button', className: 'icon', innerHTML: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>' });
+  back.setAttribute('aria-label', 'All conversations');
+  back.addEventListener('click', () => { closeThread(); renderConversations(); });
+  $('#tab-talk').replaceChildren(el('div', { className: 'thread-head' }, back, el('h3', {}, sessionTitle(s))),
+    messages, working, form);
+  if (s.factory && !s.id) {
+    const hello = el('div', { className: 'msg agent' });
+    const chip = (label, go) => { const b = el('button', { type: 'button', className: 'btn small' }, label); b.addEventListener('click', go); return b; };
+    messages.append(hello, el('div', { className: 'actions' }, chip("I've got an idea", () => openThread({ title: 'New idea' })),
+      chip('New client request', openRequestForm), chip("How's the factory?", () => showTab('room'))));
+    typeOut(hello, GREETING.owner);
+  }
+  const t = { id: s.id, project: s.project, factory: s.factory, messages, working, stop, live: null, source: null };
+  thread = t;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    sendButton.disabled = true;
+    try { await say(t, text); } catch (err) { toast(err.message); input.value = text; }
+    sendButton.disabled = false;
+    input.focus();
+  });
+  stop.addEventListener('click', () => t.id && api(`/api/sessions/${t.id}/stop`, {}).catch((err) => toast(err.message)));
+  if (t.id) await attach(t);
+  if (autoText) await say(t, autoText).catch((err) => toast(err.message));
+  input.focus();
+}
+async function say(t, text) {
+  if (t.id) return api(`/api/sessions/${t.id}/messages`, { text });
+  const s = await api('/api/sessions', { project: t.project ?? undefined, factory: t.factory || undefined, text });
+  t.id = s.id;
+  await attach(t);
+}
+async function attach(t) {
+  const { log, status } = await api(`/api/sessions/${t.id}/log`);
+  if (thread !== t) return;
+  t.messages.replaceChildren();
+  log.forEach((e) => show(t, e, false));
+  setWorking(t, status === 'working');
+  t.source = new EventSource(`/api/sessions/${t.id}/stream`);
+  t.source.onmessage = (m) => { if (thread === t) show(t, JSON.parse(m.data), true); };
+}
+function setWorking(t, on) {
+  t.working.hidden = !on;
+  t.stop.hidden = !on;
+}
+function show(t, e, live) {
+  const add = (node) => {
+    t.messages.append(node);
+    if (live) animate(node, { y: [8, 0], opacity: [0, 1] }, { duration: 0.2 });
+    node.scrollIntoView({ block: 'end' });
+  };
+  if (e.kind === 'user') { t.live = null; add(el('div', { className: 'msg user' }, e.text)); setWorking(t, true); }
+  else if (e.kind === 'delta') {
+    if (!t.live) { t.live = { node: el('div', { className: 'msg agent md' }), text: '' }; add(t.live.node); }
+    t.live.text += e.text;
+    t.live.node.innerHTML = md(t.live.text);
+    t.live.node.scrollIntoView({ block: 'end' });
+  } else if (e.kind === 'text') {
+    if (t.live) { t.live.node.innerHTML = md(e.text); t.live = null; }
+    else add(el('div', { className: 'msg agent md', innerHTML: md(e.text) }));
+  } else if (e.kind === 'tool') { t.live = null; add(el('div', { className: 'msg tool' }, `· ${e.text}`)); }
+  else if (e.kind === 'done') {
+    t.live = null;
+    setWorking(t, false);
+    if (!e.ok) add(el('div', { className: 'msg error' }, e.error ? `Stopped: ${e.error}` : 'Stopped.'));
+  }
+}
+
+// ── Ezra, the clerk behind the register. Brandon runs the factory through him; everyone else gets a greeting. ──
+const ezra = $('#ezra');
+const GREETING = {
+  owner: "Hey Brandon, welcome in. What are we making today? Tell me an idea, ask how the factory's doing, or anything else on your mind.",
+  shelf: 'Welcome in! Everything on these shelves was made right here, one file each. Pick up any box to play it, or flip it over for the back.',
+  store: 'Welcome to ForgynGames! Every title here is a single file. Pick up any box to play it, flip it for the back, or take it home with the download tag.',
+};
+// Ezra's own lines type themselves out, like a dialogue box.
+function typeOut(node, text) {
+  const more = () => node.append(el('span', { className: 'more', ariaHidden: 'true' }, '▼'));
+  if (calm) { node.textContent = text; more(); return; }
+  let i = 0;
+  const tick = () => {
+    node.textContent = text.slice(0, ++i);
+    if (i < text.length && node.isConnected) setTimeout(tick, 14);
+    else more();
+  };
+  tick();
+}
+function renderGuest() {
+  for (const [, panel] of Object.values(TABS)) $(panel).hidden = true;
+  const panel = $('#tab-questions');
+  panel.hidden = false;
+  const line = el('p', { className: 'ezra-line' });
+  const play = el('button', { type: 'button', className: 'btn primary small', innerHTML: `${icon('play')} Play what's on the TV` });
+  play.addEventListener('click', async () => { await closeCounter(); openTV(demoItem(), ezra); });
+  panel.replaceChildren(line, ...(data.items.length ? [el('div', { className: 'actions' }, play)] : []));
+  typeOut(line, GREETING[store() ? 'store' : 'shelf']);
+}
+// He waves with a "!" when something is waiting on Brandon, and looks down at the register while agents work.
+function ezraState() {
+  const waiting = hub.allowed ? hub.questions.length : 0;
+  const busy = hub.sessions.some((s) => s.status === 'working');
+  const state = waiting ? 'waiting' : busy ? 'busy' : 'idle';
+  const changed = ezra.dataset.state !== state;
+  ezra.dataset.state = state;
+  if (changed && state !== 'idle') animate($('#ezra-alert'), { scale: [0, 1.25, 1] }, { duration: 0.4 });
+  $('#ezra-alert').textContent = waiting ? '!' : busy ? '…' : '';
+  ezra.setAttribute('aria-label', !hub.allowed ? 'Ezra, the clerk' : waiting ? `Ezra: ${waiting} thing${waiting > 1 ? 's' : ''} waiting on you`
+    : busy ? 'Ezra: working on it' : 'Talk to Ezra');
+}
+ezra.addEventListener('click', () => {
+  if (!counter.hidden) return closeCounter();
+  if (!hub.allowed) return openCounter();
+  if (hub.questions.length) return openCounter('questions');
+  openCounter('talk');
+  if (!thread) factoryThread();
+});
+
+// Live restocking: new builds, new questions and conversation updates show up without a refresh.
 const getJSON = (url, fallback) => fetch(url, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : fallback)).catch(() => fallback);
-let last = '';
+let lastShelf = '';
+let lastHub = '';
 async function load() {
   const manifest = await getJSON('manifest.json', { mode: 'shelf', items: [] });
-  const questions = manifest.mode === 'store' ? [] : await getJSON('inbox.json', []);
-  const next = JSON.stringify([manifest, questions]);
-  if (next === last) return;
-  const first = !last;
-  last = next;
-  data = manifest;
-  inbox = Array.isArray(questions) ? questions : [];
-  updateSign(first);
-  render(first ? 'all' : 'new');
+  const state = manifest.mode === 'store' ? null : await getJSON('api/hub', null);
+  const before = new Map(hub.sessions.map((s) => [s.id, s.status]));
+  hub = state?.allowed ? state : { allowed: false, sessions: [], questions: [], requests: [] };
+  for (const s of hub.sessions) {
+    if (before.get(s.id) === 'working' && s.status === 'idle' && !(thread?.id === s.id && !counter.hidden))
+      toast(s.factory ? 'Done! Tap here to read it.' : `${sessionTitle(s)} is done. Tap here to read it.`, () => { openCounter('talk'); openThread(s); });
+  }
+  const questions = hub.allowed ? hub.questions : manifest.mode === 'store' ? [] : await getJSON('inbox.json', []);
+  ezraState();
+  $('#tab-q').textContent = hub.questions.length ? `Your call (${hub.questions.length})` : 'Your call';
+  const shelfKey = JSON.stringify([manifest, questions.map((q) => q.title)]);
+  if (shelfKey !== lastShelf) {
+    const first = !lastShelf;
+    lastShelf = shelfKey;
+    data = manifest;
+    inbox = Array.isArray(questions) ? questions : [];
+    updateSign(first);
+    render(first ? 'all' : 'new');
+    tune(Math.min(channel, Math.max(data.items.length - 1, 0)), true);
+    if (first) follow();
+  }
+  const hubKey = JSON.stringify(hub);
+  if (hubKey !== lastHub) {
+    lastHub = hubKey;
+    if (!counter.hidden && tab === 'questions') renderQuestions();
+    if (!counter.hidden && tab === 'talk' && !thread) renderConversations();
+    if (!counter.hidden && tab === 'room') renderRoom();
+  }
 }
 load();
-setInterval(load, 20000);
+setInterval(load, 10000);
 </script>
 </body>
 </html>
