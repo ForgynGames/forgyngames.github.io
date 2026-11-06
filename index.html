@@ -37,18 +37,19 @@
   --f-led: "VT323", ui-monospace, Menlo, monospace;
   --led: #9be15d;
   --hard: 6px 6px 0 rgb(0 0 0 / .35);
-  --box-w: 168px;
-  --row: 334px;
   --ezra-w: 230px;
+  --ezra-h: calc(var(--ezra-w) * 452 / 460);
   --bubble-bottom: 236px;
   --tail: 111px;
   color-scheme: light;
 }
-@media (max-width: 520px) { :root { --box-w: 132px; --row: 284px; --ezra-w: 150px; --bubble-bottom: 156px; --tail: 69px; } }
+@media (max-width: 760px) { :root { --ezra-w: 128px; --bubble-bottom: 136px; --tail: 57px; } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+/* One screen, no scrolling: the store sizes itself to the window. Racks page sideways; windows scroll inside themselves. */
+html, body { height: 100%; overflow: hidden; }
 body {
-  margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--f-body);
+  margin: 0; display: flex; flex-direction: column; color: var(--ink); font-family: var(--f-body);
   background-color: var(--wall);
   background-image:
     radial-gradient(ellipse 80% 40% at 50% 0, rgb(255 250 225 / .16), transparent 70%),
@@ -64,18 +65,23 @@ button { font: inherit; }
 @keyframes blink { 50% { opacity: 0; } }
 
 /* The store sign */
-header { padding: 26px max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right)); }
+header { flex: none; padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); }
 .sign {
-  max-width: 1180px; margin: 0 auto; padding: 18px 24px 16px;
-  background: var(--plate); border: 6px solid var(--ink); border-radius: 10px;
-  box-shadow: 0 0 0 4px var(--plate), 0 18px 30px rgb(0 0 0 / .4);
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 28px;
+  max-width: 1400px; margin: 0 auto; padding: 12px 20px;
+  background: var(--plate); border: 5px solid var(--ink); border-radius: 10px;
+  box-shadow: 0 0 0 4px var(--plate), 0 14px 24px rgb(0 0 0 / .4);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px;
 }
-h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(2.3rem, 7.5vw, 4.6rem); line-height: .9; color: var(--game); }
-.tagline { margin: 6px 0 0; font: 700 1.05rem/1.2 var(--f-cond); letter-spacing: .03em; }
+h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1.8rem, 4.2vw, 3.3rem); line-height: .9; color: var(--game); }
+.sign-main { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; min-width: 0; }
+.tagline { margin: 0; font: 700 1.05rem/1.2 var(--f-cond); letter-spacing: .03em; }
 .summary { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
-.sign-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-@media (max-width: 700px) { .sign-side { align-items: flex-start; } }
+.sign-side { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+@media (max-width: 760px) {
+  .sign { padding: 8px 12px; gap: 6px 12px; }
+  .sign-text, #to-store, #waiting { display: none; } /* Ezra's "!" says what's waiting */
+  .waiting, .aisles button { padding: 7px 9px 6px; font-size: .75rem; }
+}
 .waiting {
   font: 400 .9rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 7px;
   background: var(--game); color: #fff; text-decoration: none; box-shadow: 0 4px 0 var(--ink);
@@ -88,53 +94,64 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(2
 }
 .aisles button[aria-pressed="true"] { background: var(--ink); color: var(--plate); translate: 0 3px; box-shadow: 0 1px 0 var(--ink); }
 
-/* Aisles and shelves */
-main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-inset-left)) calc(var(--bubble-bottom) + 40px) max(16px, env(safe-area-inset-right)); }
-.aisle { position: relative; margin-top: 30px; }
-.aisle::before { /* the ceiling light over each aisle */
-  content: ""; position: absolute; inset: -90px 0 auto; height: 440px; pointer-events: none;
-  background: radial-gradient(ellipse 42% 32% at 50% 44%, rgb(255 246 214 / .12), transparent);
+/* The floor: aisles on the left, the counter on the right with the demo TV above Ezra's register */
+.floor {
+  flex: 1; min-height: 0; width: 100%; max-width: 1400px; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 1fr) clamp(290px, 30vw, 430px); gap: 0 24px;
+  padding: 10px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
 }
-.aisle-sign { display: flex; justify-content: center; position: relative; padding-top: 22px; margin-bottom: 4px; }
-.aisle-sign::before, .aisle-sign::after { content: ""; position: absolute; top: 0; height: 24px; width: 3px; background: repeating-linear-gradient(to bottom, #8a8375 0 4px, transparent 4px 6px); }
-.aisle-sign::before { left: calc(50% - 70px); } .aisle-sign::after { left: calc(50% + 68px); }
+#store { grid-column: 1; grid-row: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 760px) {
+  .floor { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 8px; padding: 8px 12px 10px; }
+  #store { grid-row: 2; }
+}
+/* Aisles: each is one rack that fills its share of the floor and pages sideways */
+.aisle { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; container-type: size; }
+.aisle::before { /* the ceiling light over each aisle */
+  content: ""; position: absolute; inset: -30px 0 auto; height: 70%; pointer-events: none;
+  background: radial-gradient(ellipse 42% 40% at 50% 40%, rgb(255 246 214 / .12), transparent);
+}
+.aisle-sign { flex: none; display: flex; justify-content: center; position: relative; padding-top: 16px; margin-bottom: 2px; }
+.aisle-sign::before, .aisle-sign::after { content: ""; position: absolute; top: 0; height: 18px; width: 3px; background: repeating-linear-gradient(to bottom, #8a8375 0 4px, transparent 4px 6px); }
+.aisle-sign::before { left: calc(50% - 58px); } .aisle-sign::after { left: calc(50% + 56px); }
 .aisle-sign h2 {
-  margin: 0; min-width: 190px; text-align: center; font: 400 1.35rem/1 var(--f-sign);
-  padding: 10px 18px 8px; border-radius: 6px; color: #fff; border: 3px solid var(--ink); box-shadow: 0 6px 12px rgb(0 0 0 / .3);
+  margin: 0; min-width: 150px; text-align: center; font: 400 1.05rem/1 var(--f-sign);
+  padding: 7px 14px 6px; border-radius: 6px; color: #fff; border: 3px solid var(--ink); box-shadow: 0 5px 10px rgb(0 0 0 / .3);
 }
 .aisle.game h2 { background: var(--game); } .aisle.web h2 { background: var(--site); }
+.rack { position: relative; flex: 1; min-height: 0; --box-h: clamp(96px, calc(100cqh - 100px), 330px); }
 .shelf {
-  list-style: none; margin: 0; padding: 0 12px;
-  display: grid; grid-template-columns: repeat(auto-fill, var(--box-w)); justify-content: center;
-  grid-auto-rows: var(--row); column-gap: 22px;
-  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--row) - 24px),
-    var(--maple) calc(var(--row) - 24px) calc(var(--row) - 6px), var(--maple-edge) calc(var(--row) - 6px) var(--row));
+  list-style: none; margin: 0; height: 100%; padding: 0 22px;
+  display: flex; align-items: flex-end; gap: 0 22px; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x proximity; scroll-padding: 0 22px; scrollbar-width: none; overscroll-behavior-x: contain;
+  background: linear-gradient(to bottom, transparent calc(100% - 24px), var(--maple) calc(100% - 24px) calc(100% - 6px), var(--maple-edge) calc(100% - 6px));
   border-radius: 4px; box-shadow: 0 18px 16px -14px rgb(0 0 0 / .55);
 }
-/* Phones: each aisle is one rack you swipe along */
-@media (max-width: 520px) {
-  .shelf {
-    grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: var(--box-w); justify-content: start;
-    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 22px; padding: 0 22px; scrollbar-width: none; overscroll-behavior-x: contain;
-  }
-  .shelf::-webkit-scrollbar { display: none; }
-  .item { scroll-snap-align: center; }
+.shelf::-webkit-scrollbar { display: none; }
+@media (max-width: 760px) { .shelf { padding-right: calc(var(--ezra-w) - 6px); } } /* the last box can slide out from behind Ezra */
+.item { flex: none; display: flex; flex-direction: column; justify-content: flex-end; scroll-snap-align: start; perspective: 900px; }
+/* The ◀ ▶ buttons at the ends of a rack, when there's more along it */
+.rack-nav {
+  position: absolute; top: 38%; z-index: 3; width: 40px; height: 40px; display: grid; place-items: center; padding: 0 0 0 2px;
+  border: 3px solid var(--ink); border-radius: 50%; background: var(--plate); color: var(--ink); box-shadow: 0 4px 0 var(--ink);
+  font: 400 .9rem/1 var(--f-sign); cursor: pointer; transition: translate .08s, box-shadow .08s;
 }
-.item { display: flex; flex-direction: column; justify-content: flex-end; }
+.rack-nav.prev { left: -4px; padding: 0 2px 0 0; } .rack-nav.next { right: -4px; }
+.rack-nav:active { translate: 0 3px; box-shadow: 0 1px 0 var(--ink); }
+.rack-nav:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
+@media (pointer: coarse) { .rack-nav { display: none; } } /* fingers swipe the rack */
 
 /* The boxed copy: a real case with a front and a back. Hover turns it over; a click picks it up. */
-.item { perspective: 900px; }
 .case {
-  position: relative; display: block; width: var(--box-w); aspect-ratio: 5 / 7; padding: 0; border: 0; background: none;
+  position: relative; display: block; height: var(--box-h); width: auto; aspect-ratio: 5 / 7; padding: 0; border: 0; background: none;
   color: #fff; text-align: left; cursor: pointer; transform-origin: 50% 100%; transform-style: preserve-3d;
 }
-.case.game, .held.game { --spine: #7d1f1b; --band: var(--game); }
-.case.site, .held.site { --spine: #1b3a66; --band: var(--site); }
-.case.app, .held.app { --spine: #9c6c0e; --band: var(--app); }
+.case.game, .held.game, .reader.game { --spine: #7d1f1b; --band: var(--game); }
+.case.site, .held.site, .reader.site { --spine: #1b3a66; --band: var(--site); }
+.case.app, .held.app, .reader.app { --spine: #9c6c0e; --band: var(--app); }
 .case:focus-visible, .pad .case:focus { outline: 3px solid var(--fix); outline-offset: 3px; }
 .flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.22, 1, .36, 1); }
-.case.turned .flip { transform: translateY(-16%) scale(1.75) rotateY(180deg); } /* up off the shelf to read the back */
-.item:has(.case.turned) { z-index: 6; }
+.case.turned .flip { transform: rotateY(180deg); }
 .face {
   position: absolute; inset: 0; display: flex; flex-direction: column; backface-visibility: hidden; -webkit-backface-visibility: hidden;
   border-radius: 3px 6px 6px 3px; border-left: 7px solid var(--spine); background: var(--ink); container-type: inline-size;
@@ -184,14 +201,10 @@ main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-
 .starburst svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--fix); }
 .starburst span { position: relative; }
 
-/* Older titles, spine out */
-.spines {
-  list-style: none; margin: 4px 0 0; padding: 0 16px 24px; min-height: 236px;
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px 3px; box-shadow: 0 18px 16px -14px rgb(0 0 0 / .55);
-  background: linear-gradient(to bottom, transparent calc(100% - 24px), var(--maple) calc(100% - 24px) calc(100% - 6px), var(--maple-edge) calc(100% - 6px));
-}
+/* Older titles stand spine-out at the end of the rack */
+.spine-slot { flex: none; padding-bottom: 24px; }
 .spine {
-  --band: var(--game); width: 38px; max-height: 210px; padding: 34px 0 10px; border: 0; border-radius: 2px; cursor: pointer; color: #fff;
+  --band: var(--game); display: block; width: 38px; padding: 34px 0 10px; border: 0; border-radius: 2px; cursor: pointer; color: #fff;
   background: linear-gradient(var(--band) 0 26px, var(--ink) 26px); box-shadow: inset 2px 0 0 rgb(255 255 255 / .16), 3px 6px 10px rgb(0 0 0 / .4);
   writing-mode: vertical-rl; font: 800 1rem/1 var(--f-cond); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: transform .2s cubic-bezier(.22, 1, .36, 1);
@@ -199,6 +212,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-
 .spine.site { --band: var(--site); } .spine.app { --band: var(--app); }
 .spine:hover, .spine:focus-visible, .pad .spine:focus { transform: translateY(-8px); }
 .spine:focus-visible, .pad .spine:focus { outline: 3px solid var(--fix); outline-offset: 2px; }
+/* Reading the back: the box you rest on comes up toward you, above everything, and stays on screen */
+.reader { position: fixed; z-index: 12; pointer-events: none; }
+.reader .face { transform: none; box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 16px 24px 32px rgb(0 0 0 / .5); }
 
 /* A TV set: the generated cabinet with the picture behind its glass, and knobs that really turn. The positions are
    measured from art/tv.webp, so both sets (the one on the counter and the one you play on) share them. */
@@ -246,15 +262,26 @@ button.glass { cursor: pointer; }
 .knob:focus-visible, .power:focus-visible, button.glass:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
 .knob:hover, .power:hover { filter: brightness(1.12); }
 
-/* The counter TV: attract mode over the shelf */
-.demo { max-width: 1180px; margin: 24px auto 0; padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right)); }
-.demo-set { max-width: 940px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 460px) minmax(0, 1fr); gap: 28px; align-items: center; }
-@media (max-width: 700px) { .demo-set { grid-template-columns: 1fr; gap: 14px; } }
-.demo-caption { color: var(--plate); }
-.demo-caption .ch { margin: 0; font: 400 1.3rem/1 var(--f-led); letter-spacing: .03em; color: var(--led); }
-.demo-caption h2 { margin: 8px 0 8px; font: 400 clamp(1.5rem, 3.6vw, 2.25rem)/1.05 var(--f-sign); }
-.demo-caption p { margin: 0 0 18px; max-width: 46ch; line-height: 1.5; color: rgb(244 236 214 / .84); }
-.demo-caption .hint { margin: 14px 0 0; font-size: .85rem; color: rgb(244 236 214 / .62); }
+/* The counter: the demo TV and its caption, standing above Ezra's register */
+.demo { grid-column: 2; grid-row: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding-bottom: calc(var(--ezra-h) + 46px); } /* room for his "!" too */
+.demo-set { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.tv-slot { flex: 1 1 auto; min-height: 120px; display: flex; align-items: center; justify-content: center; container-type: size; }
+.demo .set { width: min(100cqw, calc(100cqh * 880 / 684)); }
+.demo-caption { width: 100%; color: var(--plate); }
+.demo-caption .ch { margin: 0; font: 400 1.2rem/1 var(--f-led); letter-spacing: .03em; color: var(--led); }
+.demo-caption h2 { margin: 6px 0 6px; font: 400 clamp(1.3rem, 2.4vw, 2rem)/1.05 var(--f-sign); }
+.demo-caption #demo-pitch { margin: 0 0 12px; line-height: 1.45; color: rgb(244 236 214 / .84); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.demo-caption .hint { margin: 10px 0 0; font-size: .82rem; color: rgb(244 236 214 / .62); }
+@media (max-height: 860px) { .demo-caption .hint { display: none; } }
+@media (max-height: 760px) { .demo-caption #demo-pitch { -webkit-line-clamp: 2; } }
+@media (max-width: 760px) {
+  .demo { grid-column: 1; grid-row: 1; padding-bottom: 0; }
+  .demo-set { flex-direction: row; align-items: center; }
+  .tv-slot { flex: none; width: 46%; min-height: 0; aspect-ratio: 880 / 684; }
+  .demo .set { width: 100%; }
+  .demo-caption h2 { font-size: 1.15rem; }
+  .demo-caption #demo-pitch, .demo-caption .hint { display: none; }
+}
 
 /* The price tag clipped to the shelf edge */
 .tag {
@@ -306,7 +333,7 @@ button.glass { cursor: pointer; }
 .btn.go { background-color: var(--pass); color: #fff; }
 .btn.go:hover { background-color: #359a56; }
 .dot.warn { background: var(--fix); }
-.mode { display: inline-block; margin: 8px 0 0; padding: 4px 7px 3px; border-radius: 4px; font: 400 1rem/1 var(--f-led); letter-spacing: .03em; background: var(--ink); color: var(--led); }
+.mode { display: inline-block; margin: 5px 0 0; padding: 4px 7px 3px; border-radius: 4px; font: 400 1rem/1 var(--f-led); letter-spacing: .03em; background: var(--ink); color: var(--led); }
 .hold-info .kind { margin: 0; font: 400 1.15rem/1 var(--f-led); letter-spacing: .06em; color: var(--muted); }
 .hold-info h2 { margin: 6px 0 12px; font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.05 var(--f-sign); padding-right: 40px; }
 .hold-info .hint { margin: 14px 0 0; font-size: .85rem; color: var(--muted); }
@@ -474,11 +501,13 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
 <body>
 <header>
   <div class="sign" id="sign">
-    <div>
+    <div class="sign-main">
       <h1 id="store-name">ForgynGames</h1>
-      <p class="tagline" id="tagline">Games · Web apps &amp; sites</p>
-      <p class="summary" id="summary">Stocking the shelves…</p>
-      <p class="mode" id="mode" hidden>DEV VIEW · only you see this</p>
+      <div class="sign-text">
+        <p class="tagline" id="tagline">Games · Web apps &amp; sites</p>
+        <p class="summary" id="summary">Stocking the shelves…</p>
+        <p class="mode" id="mode" hidden>DEV VIEW · only you see this</p>
+      </div>
     </div>
     <div class="sign-side">
       <a class="btn small" id="to-store" href="https://forgyngames.github.io" target="_blank" rel="noopener" hidden>Open the store ↗</a>
@@ -491,14 +520,17 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
     </div>
   </div>
 </header>
+<div class="floor">
 <section class="demo" id="demo" hidden aria-labelledby="demo-title">
   <div class="demo-set">
+    <div class="tv-slot">
     <div class="set on" id="demo-set">
       <button type="button" class="glass" id="demo-screen"><span class="pic"></span><canvas class="snow" width="320" height="254" aria-hidden="true"></canvas><span class="beam"></span><span class="osd" aria-hidden="true"></span></button>
       <img src="art/tv.webp" alt="" width="880" height="684">
       <button type="button" class="knob ch" title="Channel: turn it, or click its right or left side" aria-label="Channel"></button>
       <button type="button" class="knob vol" title="Volume: turn it, or click its right or left side" aria-label="Volume" role="slider" aria-valuemin="0" aria-valuemax="10"></button>
       <button type="button" class="power" title="Power" aria-label="Power"></button>
+    </div>
     </div>
     <div class="demo-caption">
       <p class="ch" id="demo-ch"></p>
@@ -512,6 +544,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
   </div>
 </section>
 <main id="store" aria-live="polite"></main>
+</div>
 
 <div class="overlay" id="tv" hidden>
   <div class="tv-room" role="dialog" aria-modal="true" aria-labelledby="tv-title">
@@ -672,8 +705,10 @@ function box(item) {
   });
   // Resting the mouse on a box turns it over to its back, after a beat, so sweeping across the shelf doesn't spin everything.
   let turnTimer;
-  caseButton.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') turnTimer = setTimeout(() => caseButton.classList.add('turned'), 380); });
-  caseButton.addEventListener('pointerleave', () => { clearTimeout(turnTimer); caseButton.classList.remove('turned'); });
+  caseButton.addEventListener('pointerenter', (e) => {
+    if (e.pointerType === 'mouse') turnTimer = setTimeout(() => { caseButton.classList.add('turned'); readBack(item, caseButton); }, 380);
+  });
+  caseButton.addEventListener('pointerleave', () => { clearTimeout(turnTimer); caseButton.classList.remove('turned'); stopReading(); });
   const save = el('a', { className: 'icon', href: download(item), download: `${item.name}.html`, title: 'Download', innerHTML: icon('download') });
   save.setAttribute('aria-label', `Download ${item.title}`);
   const p = lineup.get(item.name);
@@ -685,14 +720,36 @@ function box(item) {
   return li;
 }
 
+let racks = [];
+addEventListener('resize', () => { racks.forEach((update) => update()); stopReading(); });
+
+// Resting the mouse on a box: it turns over and comes up toward you, big enough to read, above everything and on screen.
+const reader = el('div', { className: 'reader', hidden: true });
+reader.setAttribute('aria-hidden', 'true');
+document.body.append(reader);
+function readBack(item, from) {
+  const r = from.getBoundingClientRect();
+  const k = 1.8;
+  const w = r.width * k;
+  const h = r.height * k;
+  const x = Math.min(innerWidth - w - 12, Math.max(12, r.left + r.width / 2 - w / 2));
+  const y = Math.min(innerHeight - h - 12, Math.max(12, r.top + r.height / 2 - h / 2 - r.height * 0.3));
+  reader.className = `reader ${item.kind}`;
+  reader.replaceChildren(backFace(item));
+  Object.assign(reader.style, { left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
+  reader.hidden = false;
+  animate(reader, { x: [r.left + r.width / 2 - (x + w / 2), 0], y: [r.top + r.height / 2 - (y + h / 2), 0], scale: [1 / k, 1], opacity: [0, 1] }, spring(380, 30));
+}
+function stopReading() { reader.hidden = true; }
+
 // Past the first eight in an aisle, older titles go spine out.
 const FACE_OUT = 8;
 function spine(item, i) {
   const b = el('button', { type: 'button', className: `spine ${item.kind}` }, item.title);
-  b.style.height = `${190 + (i % 3) * 10}px`;
+  b.style.height = `calc(var(--box-h) * ${0.86 + (i % 3) * 0.04})`;
   b.setAttribute('aria-label', `${item.title}: pick it up`);
   b.addEventListener('click', () => pickUp(item, b));
-  const li = el('li', {}, b);
+  const li = el('li', { className: 'spine-slot' }, b);
   li.dataset.name = item.name;
   return li;
 }
@@ -704,13 +761,35 @@ function render(arrive) {
     return;
   }
   const aisles = AISLES.filter(([a]) => (aisle === 'all' || aisle === a) && data.items.some((i) => aisleOf(i.kind) === a));
+  racks = [];
   main.replaceChildren(...aisles.map(([a, title]) => {
     const all = data.items.filter((i) => aisleOf(i.kind) === a);
-    const spines = el('ul', { className: 'spines' }, ...all.slice(FACE_OUT).map(spine));
-    spines.setAttribute('aria-label', `Older ${title.toLowerCase()}`);
+    const shelf = el('ul', { className: 'shelf' }, ...all.slice(0, FACE_OUT).map(box), ...all.slice(FACE_OUT).map(spine));
+    shelf.setAttribute('aria-label', `${title} shelf`);
+    // A rack pages sideways: ◀ ▶ at its ends, the mouse wheel, a swipe or the arrow keys. The page itself never scrolls.
+    const nav = (dir, symbol, label) => {
+      const b = el('button', { type: 'button', className: `rack-nav ${dir < 0 ? 'prev' : 'next'}`, hidden: true }, symbol);
+      b.setAttribute('aria-label', label);
+      b.addEventListener('click', () => shelf.scrollBy({ left: dir * shelf.clientWidth * 0.8, behavior: calm ? 'auto' : 'smooth' }));
+      return b;
+    };
+    const prev = nav(-1, '◀', `Back along the ${title.toLowerCase()} shelf`);
+    const next = nav(1, '▶', `Further along the ${title.toLowerCase()} shelf`);
+    const update = () => {
+      prev.hidden = shelf.scrollLeft < 4;
+      next.hidden = shelf.scrollLeft + shelf.clientWidth > shelf.scrollWidth - 4;
+    };
+    shelf.addEventListener('scroll', () => { update(); stopReading(); }, { passive: true });
+    shelf.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || shelf.scrollWidth <= shelf.clientWidth) return;
+      e.preventDefault();
+      shelf.scrollLeft += e.deltaY;
+    }, { passive: false });
+    racks.push(update);
     return el('section', { className: `aisle ${a}` }, el('div', { className: 'aisle-sign' }, el('h2', {}, title)),
-      el('ul', { className: 'shelf' }, ...all.slice(0, FACE_OUT).map(box)), ...(all.length > FACE_OUT ? [spines] : []));
+      el('div', { className: 'rack' }, shelf, prev, next));
   }));
+  requestAnimationFrame(() => racks.forEach((update) => update()));
 
   const items = [...main.querySelectorAll('.item')];
   const fresh = arrive === 'all' ? items : items.filter((li) => !seen?.has(li.dataset.name));
@@ -1062,6 +1141,8 @@ const turnTo = (deg, instant) => {
 const showingBack = () => Math.abs(Math.round(angle / 180)) % 2 === 1;
 function pickUp(item, from, back = false) {
   if (holding) return;
+  stopReading();
+  from?.classList.remove('turned');
   holding = { item, from };
   held.className = `held ${item.kind}`;
   held.replaceChildren(frontFace(item), backFace(item));
