@@ -213,6 +213,12 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 }
 /* Safari draws a face's rotated stickers through the back of the box, so they hide whenever the back is up */
 .case.turned .front :is(.sticker, .starburst), .held.back-up .front :is(.sticker, .starburst) { visibility: hidden; transition: visibility 0s .15s; }
+/* Each face shows only while its side faces you, swapping halfway through the turn: some WebKit builds ignore
+   backface-visibility and draw a box's back, mirrored, through its front */
+.face { transition: visibility 0s .15s; }
+.face.back { visibility: hidden; }
+.case.turned .face.back, .held.back-up .face.back, .reader .face.back { visibility: visible; }
+.case.turned .face.front, .held.back-up .face.front { visibility: hidden; }
 .sticker.pass { background: var(--pass); color: #fff; }
 .sticker.fix { background: var(--fix); color: var(--ink); }
 .sticker.call { background: var(--game); color: #fff; }
