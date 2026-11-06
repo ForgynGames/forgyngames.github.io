@@ -381,6 +381,10 @@ button.glass { cursor: pointer; }
 .history li { display: flex; justify-content: space-between; gap: 10px; }
 .history li span:last-child { color: var(--muted); text-align: right; }
 .line .facts { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
+.line .autopilot { margin: 6px 0 0; font-size: .85rem; color: var(--muted); }
+.line .autopilot strong { color: var(--ink); }
+.linkish { padding: 10px 4px; border: 0; background: none; font: inherit; font-weight: 600; color: var(--game); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.linkish:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
 .btn.go { background-color: var(--pass); color: #fff; }
 .btn.go:hover { background-color: #359a56; }
 .btn.trash { color: var(--game); } /* quiet, last in the row, until it's asked twice */
@@ -737,7 +741,7 @@ function box(item) {
   // Resting the mouse on a box turns it over to its back, after a beat, so sweeping across the shelf doesn't spin everything.
   let turnTimer;
   caseButton.addEventListener('pointerenter', (e) => {
-    if (e.pointerType === 'mouse') turnTimer = setTimeout(() => { caseButton.classList.add('turned'); readBack(item, caseButton); }, 380);
+    if (e.pointerType === 'mouse') turnTimer = setTimeout(() => caseButton.classList.add('turned'), 380); // turned over in place, its own size, like in your hand
   });
   caseButton.addEventListener('pointerleave', () => { clearTimeout(turnTimer); caseButton.classList.remove('turned'); stopReading(); });
   const save = el('a', { className: 'icon', href: download(item), download: `${item.name}.html`, title: 'Download', innerHTML: icon('download') });
@@ -1291,8 +1295,28 @@ function lineSection(p) {
   const facts = [p.ahead ? `${p.ahead} change${p.ahead > 1 ? 's' : ''} not on main yet` : 'All on main', p.inStore ? 'In the store' : 'Not in the store yet'];
   return el('section', { className: 'line' }, el('h3', {}, 'Production line'), track,
     el('p', { className: 'where' }, `Stage ${p.step + 1} of ${p.line.length}: ${p.stage}${p.waiting ? ' · your call' : p.shelved ? ' · shelved' : ''}`),
-    ...(p.asked.length ? [history] : []), el('p', { className: 'facts' }, facts.join(' · ')));
+    ...(p.asked.length ? [history] : []), el('p', { className: 'facts' }, facts.join(' · ')), autopilotRow(p));
 }
+// Autopilot: Ezra decides Fun? and Look? with evidence and shows you each one; Ship? is always yours.
+function autopilotRow(p) {
+  const b = el('button', { type: 'button', className: 'linkish' }, p.autopilot ? 'Turn it off' : 'Turn it on');
+  b.addEventListener('click', async () => {
+    b.disabled = true;
+    try {
+      const s = await api(`/api/projects/${p.name}/autopilot`, { on: !p.autopilot });
+      letGo();
+      toast(p.autopilot ? 'Autopilot off: I\'ll ask you at every question.' : 'Autopilot on: I\'ll take it to Ship? and show you every step.');
+      openCounter('talk');
+      openThread(s);
+    } catch (e) {
+      toast(e.message);
+      b.disabled = false;
+    }
+  });
+  return el('p', { className: 'autopilot' }, el('strong', {}, `Autopilot ${p.autopilot ? 'on' : 'off'}: `),
+    p.autopilot ? 'I decide Fun? and Look? and show you each one. Ship? is yours. ' : 'every question waits for you. ', b);
+}
+
 // Publishing asks twice, and says so when something is still open or broken.
 function publishButton(item, p) {
   const label = p.inStore ? 'Update the store copy' : 'Put it in the store';
