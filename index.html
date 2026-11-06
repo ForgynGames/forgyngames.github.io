@@ -194,6 +194,7 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 }
 .band { background: var(--band); color: #fff; font: 400 clamp(.66rem, 4.4cqi, 1rem)/1 var(--f-sign); padding: .5em .7em .42em; letter-spacing: .04em; border-radius: 0 6px 0 0; }
 .app .band { color: var(--ink); }
+.band.client { background: var(--ink); color: var(--plate); } /* client work: private, made for someone else */
 .art img { flex: 1; min-height: 0; width: 100%; object-fit: cover; object-position: top center; display: block; background: #2a2622; }
 .title { padding: 8px 9px 10px; font: 800 clamp(1.05rem, 7cqi, 1.7rem)/1.02 var(--f-cond); text-wrap: balance; background: linear-gradient(transparent, rgb(0 0 0 / .35)), var(--ink); }
 /* The back cover: a screenshot, the pitch and the fine print, sized to the box it is printed on */
@@ -706,7 +707,7 @@ const download = (item) => (store() ? `${item.name}/index.html` : `${item.name}.
 const fallback = (e) => { e.target.onerror = null; e.target.src = 'art/coming-soon.webp'; };
 function frontFace(item) {
   const face = el('span', { className: 'face front' },
-    el('span', { className: 'band' }, LABEL[item.kind] ?? item.kind),
+    item.client && !store() ? el('span', { className: 'band client' }, `Client · ${item.client}`) : el('span', { className: 'band' }, LABEL[item.kind] ?? item.kind), // client work: private, never in the store
     el('span', { className: 'art' }, el('img', { src: art(item), alt: '', loading: 'lazy', onerror: fallback }),
       ...(item.cover ? [] : [el('span', { className: 'title' }, item.title)])));
   if (!store()) {
@@ -1240,6 +1241,7 @@ function pickUp(item, from, back = false) {
   const specs = [store() ? `Shipped ${when(item.shippedAt)}` : `Checked ${when(item.checkedAt)}`,
     ...(!store() && item.problems ? [`${item.problems} to fix`] : []),
     ...Object.entries(item.scores ?? {}).map(([k, v]) => `${k} ${v}`)];
+  if (item.client && !store()) specs.unshift(`Client work for ${item.client}: private, never in the store`);
   $('#hold-specs').replaceChildren(...specs.map((t) => el('li', {}, t)));
   const p = !store() && hub.allowed ? lineup.get(item.name) : null;
   $('#hold-line').replaceChildren(...(p ? [lineSection(p)] : []));
@@ -1250,7 +1252,7 @@ function pickUp(item, from, back = false) {
   const actions = [playBtn, button('Turn it over', () => turnTo(angle + 180)),
     el('a', { className: 'btn', href: download(item), download: `${item.name}.html` }, 'Take it home')];
   if (item.trailer) actions.splice(1, 0, button('Watch the trailer', () => { letGo(); openTV(item, from, true); }));
-  if (p) actions.splice(1, 0, publishButton(item, p));
+  if (p && !item.client) actions.splice(1, 0, publishButton(item, p));
   if (hub.allowed && !store()) actions.push(button('Ask Ezra about it', () => {
     letGo();
     openCounter('talk');
