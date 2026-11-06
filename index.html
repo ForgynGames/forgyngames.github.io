@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shelf · Ezra Mini</title>
+<meta name="description" content="Games, websites and web apps, each a single HTML file you can play anywhere.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;600&family=Bungee&display=swap">
+<style>
+/* A late-90s neighborhood video store: green slatwall, maple shelves, hanging aisle signs, boxed copies
+   face-out with price tags on the shelf edge, a CRT demo TV on the counter. The same page is the private
+   shelf on Ezra Mini and the public ForgynGames store; manifest.json says which. */
+:root {
+  --wall: #1f4636;
+  --groove: #15342a;
+  --maple: #c9965c;
+  --maple-edge: #8f6236;
+  --plate: #f4ecd6;
+  --ink: #1c1915;
+  --muted: #5c5346;
+  --game: #b3312b;
+  --site: #2b5797;
+  --app: #d99a1e;
+  --pass: #2f8a4c;
+  --fix: #f2c230;
+  --tv: #2a2724;
+  --f-sign: "Bungee", "Arial Black", Impact, sans-serif;
+  --f-cond: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --box-w: 168px;
+  --row: 334px;
+  color-scheme: light;
+}
+@media (max-width: 520px) { :root { --box-w: 146px; --row: 302px; } }
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; color: var(--ink); font-family: var(--f-body);
+  background-color: var(--wall);
+  background-image:
+    radial-gradient(ellipse 80% 40% at 50% 0, rgb(255 250 225 / .16), transparent 70%),
+    repeating-linear-gradient(to bottom, var(--wall) 0 26px, var(--groove) 26px 29px);
+}
+button { font: inherit; }
+
+/* The store sign */
+header { padding: 26px max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right)); }
+.sign {
+  max-width: 1180px; margin: 0 auto; padding: 18px 24px 16px;
+  background: var(--plate); border: 6px solid var(--ink); border-radius: 10px;
+  box-shadow: 0 0 0 4px var(--plate), 0 18px 30px rgb(0 0 0 / .4);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 28px;
+}
+h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(2.3rem, 7.5vw, 4.6rem); line-height: .9; color: var(--game); }
+.tagline { margin: 6px 0 0; font: 700 1.05rem/1.2 var(--f-cond); letter-spacing: .03em; }
+.summary { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
+.sign-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+@media (max-width: 700px) { .sign-side { align-items: flex-start; } }
+.waiting {
+  font: 400 .9rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 6px;
+  background: var(--game); color: #fff; text-decoration: none;
+}
+.waiting:focus-visible, .aisles button:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
+.aisles { display: flex; flex-wrap: wrap; gap: 8px; }
+.aisles button {
+  font: 400 .85rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 6px;
+  background: var(--plate); color: var(--ink); cursor: pointer;
+}
+.aisles button[aria-pressed="true"] { background: var(--ink); color: var(--plate); }
+
+/* Aisles and shelves */
+main { max-width: 1180px; margin: 0 auto; padding: 18px max(16px, env(safe-area-inset-left)) 70px max(16px, env(safe-area-inset-right)); }
+.aisle { margin-top: 30px; }
+.aisle-sign { display: flex; justify-content: center; position: relative; padding-top: 22px; margin-bottom: 4px; }
+.aisle-sign::before, .aisle-sign::after { content: ""; position: absolute; top: 0; height: 24px; width: 2px; background: rgb(0 0 0 / .45); }
+.aisle-sign::before { left: calc(50% - 70px); } .aisle-sign::after { left: calc(50% + 68px); }
+.aisle-sign h2 {
+  margin: 0; min-width: 190px; text-align: center; font: 400 1.35rem/1 var(--f-sign);
+  padding: 10px 18px 8px; border-radius: 6px; color: #fff; border: 3px solid var(--ink); box-shadow: 0 6px 12px rgb(0 0 0 / .3);
+}
+.aisle.game h2 { background: var(--game); } .aisle.web h2 { background: var(--site); }
+.shelf {
+  list-style: none; margin: 0; padding: 0 12px;
+  display: grid; grid-template-columns: repeat(auto-fill, var(--box-w)); justify-content: center;
+  grid-auto-rows: var(--row); column-gap: 22px;
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--row) - 24px),
+    var(--maple) calc(var(--row) - 24px) calc(var(--row) - 6px), var(--maple-edge) calc(var(--row) - 6px) var(--row));
+  border-radius: 4px;
+}
+.item { display: flex; flex-direction: column; justify-content: flex-end; }
+
+/* The boxed copy: band, cover art, and stickers */
+.case {
+  position: relative; display: flex; flex-direction: column; width: var(--box-w); aspect-ratio: 5 / 7; padding: 0;
+  color: #fff; text-align: left; cursor: pointer; border: 0; border-radius: 3px 5px 5px 3px; overflow: visible;
+  background: var(--ink); border-left: 7px solid var(--spine);
+  box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 6px 10px 14px rgb(0 0 0 / .45);
+  transform-origin: 50% 100%;
+}
+.case.game { --spine: #7d1f1b; --band: var(--game); }
+.case.site { --spine: #1b3a66; --band: var(--site); }
+.case.app { --spine: #9c6c0e; --band: var(--app); }
+.case:focus-visible { outline: 3px solid var(--fix); outline-offset: 3px; }
+html:not(.motion) .case { transition: transform .3s ease-out; }
+html:not(.motion) .case:hover { transform: translateY(-10px) rotate(-1.5deg); }
+.art { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 0 0 5px 0; }
+.art::after { /* the plastic sleeve catching the store lights */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, rgb(255 255 255 / .22) 0 14%, transparent 34% 72%, rgb(255 255 255 / .08) 90%);
+}
+.band { background: var(--band); font: 400 .72rem/1 var(--f-sign); padding: 6px 8px 5px; letter-spacing: .04em; border-radius: 0 5px 0 0; }
+.case.app .band { color: var(--ink); }
+.art img { flex: 1; min-height: 0; width: 100%; object-fit: cover; object-position: top center; display: block; background: #2a2622; }
+.title { padding: 8px 9px 10px; font: 800 1.12rem/1.02 var(--f-cond); text-wrap: balance; background: linear-gradient(transparent, rgb(0 0 0 / .35)), var(--ink); }
+.sticker {
+  position: absolute; top: 30px; right: -8px; width: 58px; height: 58px; border-radius: 50%; z-index: 1;
+  display: grid; place-items: center; text-align: center; transform: rotate(12deg);
+  font: 800 .78rem/1 var(--f-cond); letter-spacing: .02em; text-transform: uppercase;
+  box-shadow: 0 2px 4px rgb(0 0 0 / .4), inset 0 0 0 3px rgb(255 255 255 / .55);
+}
+.sticker.pass { background: var(--pass); color: #fff; }
+.sticker.fix { background: var(--fix); color: var(--ink); }
+.sticker.call { background: var(--game); color: #fff; }
+.starburst {
+  position: absolute; left: -14px; bottom: 34px; width: 56px; height: 56px; z-index: 1;
+  display: grid; place-items: center; transform: rotate(-12deg); color: var(--ink); font: 400 .66rem/1 var(--f-sign);
+}
+.starburst svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--fix); }
+.starburst span { position: relative; }
+
+/* The price tag clipped to the shelf edge */
+.tag {
+  height: 24px; margin: 0 6px; padding: 0 2px 0 7px; background: #fffdf6; border-radius: 2px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .35); white-space: nowrap;
+  display: flex; align-items: center; gap: 6px; font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.tag strong { font: 800 .98rem/1 var(--f-cond); color: var(--ink); }
+.tag time { margin-right: auto; }
+.icon { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 3px; background: none; color: var(--ink); cursor: pointer; }
+.icon:hover, .icon:focus-visible { background: var(--plate); outline: none; }
+.icon svg { width: 15px; height: 15px; }
+
+/* The demo TV and the back of the box */
+.overlay {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; perspective: 1400px;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgb(12 10 8 / .8);
+}
+.overlay[hidden] { display: none; }
+.tv {
+  width: min(1000px, 100%); display: grid; grid-template-columns: 1fr auto; gap: 18px; padding: 22px;
+  background: var(--tv); border-radius: 26px; box-shadow: inset 0 2px 0 rgb(255 255 255 / .08), 0 30px 60px rgb(0 0 0 / .55);
+}
+.screen { position: relative; aspect-ratio: 16 / 10; border-radius: 18px / 24px; overflow: hidden; background: #0d0f0e; box-shadow: inset 0 0 0 6px #151311; }
+.screen iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+.crt { position: absolute; inset: 0; background: #f4f8f2; pointer-events: none; }
+.controls { width: 110px; display: flex; flex-direction: column; align-items: center; gap: 16px; padding-top: 6px; }
+.knob { width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6d675f, #2f2b27 70%); box-shadow: 0 3px 6px rgb(0 0 0 / .5); position: relative; }
+.knob::after { content: ""; position: absolute; left: 23px; top: 6px; width: 4px; height: 14px; border-radius: 2px; background: #cfc7b8; }
+.knob + .knob::after { transform: rotate(60deg); transform-origin: 2px 19px; }
+.grille { width: 84px; height: 110px; background-image: radial-gradient(circle, #151311 2px, transparent 2.5px); background-size: 9px 9px; }
+.tv-bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--plate); }
+.tv-bar h2 { margin: 0 auto 0 0; font: 400 1.15rem/1.1 var(--f-sign); }
+@media (max-width: 700px) { .tv { grid-template-columns: 1fr; padding: 12px; border-radius: 18px; } .controls { display: none; } }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; font: 800 .95rem/1 var(--f-cond); letter-spacing: .02em;
+  padding: 10px 14px 9px; border-radius: 5px; border: 3px solid var(--ink); background: var(--plate); color: var(--ink);
+  text-decoration: none; cursor: pointer;
+}
+.btn.primary { background: var(--ink); color: var(--plate); border-color: var(--plate); }
+.btn:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
+.btn svg { width: 16px; height: 16px; }
+.back {
+  position: relative; width: min(640px, 100%); max-height: 100%; overflow: auto; padding: 20px 24px 22px;
+  background: var(--plate); border-radius: 8px; box-shadow: 0 30px 60px rgb(0 0 0 / .55);
+}
+.back-band { height: 16px; margin: -20px -24px 16px; background: var(--band, var(--game)); }
+.back.game { --band: var(--game); } .back.site { --band: var(--site); } .back.app { --band: var(--app); }
+.back .kind { font: 400 .75rem/1 var(--f-sign); color: var(--muted); }
+.back h2 { margin: 6px 0 8px; font: 400 1.7rem/1.05 var(--f-sign); padding-right: 48px; }
+.back .pitch { margin: 0; font-size: 1.02rem; line-height: 1.5; max-width: 60ch; }
+.shots { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; margin: 16px 0; }
+.shots img { display: block; width: 100%; border: 3px solid var(--ink); border-radius: 4px; background: #222; }
+.shots img.phone { width: 92px; }
+.specs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
+.specs li { font: 700 .92rem/1 var(--f-cond); padding: 7px 9px 6px; border: 2px solid var(--ink); border-radius: 4px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.close { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; }
+.close svg { width: 20px; height: 20px; }
+
+/* Empty shelves */
+.closed { max-width: 460px; margin: 46px auto 0; background: var(--plate); border: 4px solid var(--ink); border-radius: 8px; padding: 22px 24px; }
+.closed h2 { margin: 0; font: 400 1.5rem/1.1 var(--f-sign); color: var(--game); }
+.closed p { margin: 10px 0; color: var(--muted); }
+.closed code { display: block; margin: 6px 0; padding: 7px 9px; background: rgb(28 25 21 / .08); border-radius: 4px; font: .84rem/1.3 ui-monospace, Menlo, monospace; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { html:not(.motion) .case, html:not(.motion) .case:hover { transition: none; transform: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="sign" id="sign">
+    <div>
+      <h1 id="store-name">Shelf</h1>
+      <p class="tagline" id="tagline">Games · Web apps &amp; sites</p>
+      <p class="summary" id="summary">Stocking the shelves…</p>
+    </div>
+    <div class="sign-side">
+      <a class="waiting" id="waiting" href="https://github.com/warfare-hub/factory/issues?q=is%3Aopen+label%3Aneeds-you" hidden></a>
+      <nav class="aisles" aria-label="Aisles">
+        <button type="button" data-aisle="all" aria-pressed="true">All</button>
+        <button type="button" data-aisle="game" aria-pressed="false">Games</button>
+        <button type="button" data-aisle="web" aria-pressed="false">Web</button>
+      </nav>
+    </div>
+  </div>
+</header>
+<main id="store" aria-live="polite"></main>
+
+<div class="overlay" id="tv" hidden>
+  <div class="tv" role="dialog" aria-modal="true" aria-labelledby="tv-title">
+    <div class="screen"><iframe id="tv-frame" title="Game or app" allow="autoplay; fullscreen; gamepad"></iframe><div class="crt" hidden></div></div>
+    <div class="controls" aria-hidden="true"><div class="knob"></div><div class="knob"></div><div class="grille"></div></div>
+    <div class="tv-bar">
+      <h2 id="tv-title"></h2>
+      <button type="button" class="btn" id="tv-full">Full screen</button>
+      <a class="btn" id="tv-open" target="_blank" rel="noopener">Open in a new tab</a>
+      <button type="button" class="btn primary" id="tv-close">Turn off</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="back" hidden>
+  <article class="back" role="dialog" aria-modal="true" aria-labelledby="back-title">
+    <div class="back-band" aria-hidden="true"></div>
+    <button type="button" class="icon close" id="back-close" aria-label="Put the box back"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+    <span class="kind" id="back-kind"></span>
+    <h2 id="back-title"></h2>
+    <p class="pitch" id="back-pitch"></p>
+    <div class="shots" id="back-shots"></div>
+    <ul class="specs" id="back-specs"></ul>
+    <div class="actions" id="back-actions"></div>
+  </article>
+</div>
+
+<template id="closed">
+  <div class="closed">
+    <h2>Shelves get stocked soon</h2>
+    <p>Every build lands here after its check. Bring an idea to the Claude app and talk it through, or start one by hand:</p>
+    <code>npm run new moth-light game</code>
+    <code>npm run check moth-light</code>
+  </div>
+</template>
+<template id="soon">
+  <div class="closed">
+    <h2>New titles on the way</h2>
+    <p>Games and web apps from ForgynGames land here as they ship. Each one is a single file you can play right here or take home.</p>
+  </div>
+</template>
+
+<script src="motion.js"></script>
+<script>
+const M = window.Motion;
+const calm = !M || matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!calm) document.documentElement.classList.add('motion');
+const animate = (target, keyframes, options) => (calm ? Promise.resolve() : M.animate(target, keyframes, options));
+const spring = (stiffness = 420, damping = 28) => ({ type: 'spring', stiffness, damping });
+const $ = (selector) => document.querySelector(selector);
+const el = (tag, props = {}, ...children) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...children);
+  return e;
+};
+const ICONS = {
+  flip: '<path d="M2.5 8a5.5 5.5 0 0 1 9.6-3.7M13.5 8a5.5 5.5 0 0 1-9.6 3.7M12.5 1.5v3h-3M3.5 14.5v-3h3"/>',
+  download: '<path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M3 13.5h10"/>',
+  play: '<path d="M4.5 2.5v11l9-5.5z"/>',
+};
+const icon = (name) => `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+const STAR = '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,0 61,18 82,8 80,30 100,38 85,55 98,75 76,77 70,100 50,86 30,100 24,77 2,75 15,55 0,38 20,30 18,8 39,18"/></svg>';
+const LABEL = { game: 'Game', site: 'Site', app: 'App' };
+const AISLES = [['game', 'Games'], ['web', 'Web']];
+const aisleOf = (kind) => (kind === 'game' ? 'game' : 'web');
+const ago = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+const when = (iso) => {
+  const s = (new Date(iso) - Date.now()) / 1000;
+  for (const [unit, size] of [['day', 86400], ['hour', 3600], ['minute', 60]])
+    if (Math.abs(s) >= size) return ago.format(Math.round(s / size), unit);
+  return 'just now';
+};
+const short = (iso) => {
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  return m < 1 ? 'now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+};
+
+let data = { mode: 'shelf', items: [] };
+let inbox = [];
+let aisle = 'all';
+let seen = null;
+let returnFocus = null;
+const store = () => data.mode === 'store';
+const stamp = (item) => Date.parse(item.checkedAt ?? item.shippedAt);
+const isNew = (item) => Date.now() - (item.addedAt ? Date.parse(item.addedAt) : stamp(item)) < (store() ? 7 : 1) * 86400e3;
+const hrefOf = (item) => item.href ?? (store() ? `${item.name}/` : `${item.name}.html`);
+const calls = (item) => inbox.filter((issue) => issue.title.toLowerCase().startsWith(`${item.name}:`));
+const art = (item) => `${item.cover ? 'covers' : 'thumbs'}/${item.name}.png?${stamp(item)}`;
+const download = (item) => (store() ? `${item.name}/index.html` : `${item.name}.html`);
+
+function box(item) {
+  const caseButton = el('button', { type: 'button', className: `case ${item.kind}` },
+    el('span', { className: 'band' }, LABEL[item.kind] ?? item.kind),
+    el('span', { className: 'art' }, el('img', { src: art(item), alt: '', loading: 'lazy' }),
+      ...(item.cover ? [] : [el('span', { className: 'title' }, item.title)])));
+  caseButton.setAttribute('aria-label', `Play ${item.title}`);
+  caseButton.addEventListener('click', () => openTV(item, caseButton));
+  if (!store()) {
+    const waiting = calls(item).length;
+    const ok = item.problems === 0;
+    caseButton.append(el('span', { className: `sticker ${waiting ? 'call' : ok ? 'pass' : 'fix'}` },
+      waiting ? 'Your call' : ok ? 'Checked' : `${item.problems} to fix`));
+  }
+  if (isNew(item)) caseButton.append(el('span', { className: 'starburst', innerHTML: STAR }, el('span', {}, 'New')));
+
+  const flip = el('button', { type: 'button', className: 'icon', title: 'See the back of the box', innerHTML: icon('flip') });
+  flip.setAttribute('aria-label', `See the back of ${item.title}`);
+  flip.addEventListener('click', () => openBack(item, flip));
+  const save = el('a', { className: 'icon', href: download(item), download: `${item.name}.html`, title: 'Download', innerHTML: icon('download') });
+  save.setAttribute('aria-label', `Download ${item.title}`);
+  const tag = el('p', { className: 'tag' }, el('strong', {}, `${item.kb} KB`),
+    el('time', { dateTime: item.shippedAt ?? item.checkedAt }, short(item.shippedAt ?? item.checkedAt)), flip, save);
+  const li = el('li', { className: 'item' }, caseButton, tag);
+  li.dataset.name = item.name;
+  return li;
+}
+
+function render(arrive) {
+  const main = $('#store');
+  if (!data.items.length) {
+    main.replaceChildren($(store() ? '#soon' : '#closed').content.cloneNode(true));
+    return;
+  }
+  const aisles = AISLES.filter(([a]) => (aisle === 'all' || aisle === a) && data.items.some((i) => aisleOf(i.kind) === a));
+  main.replaceChildren(...aisles.map(([a, title]) => el('section', { className: `aisle ${a}` },
+    el('div', { className: 'aisle-sign' }, el('h2', {}, title)),
+    el('ul', { className: 'shelf' }, ...data.items.filter((i) => aisleOf(i.kind) === a).map(box)))));
+
+  const items = [...main.querySelectorAll('.item')];
+  const fresh = arrive === 'all' ? items : items.filter((li) => !seen?.has(li.dataset.name));
+  if (fresh.length) {
+    animate(fresh, { y: [-80, 0], opacity: [0, 1], rotate: [-4, 0] }, { ...spring(300, 20), delay: M?.stagger(0.045) });
+    fresh.forEach((li) => {
+      const burst = li.querySelector('.starburst');
+      if (burst) animate(burst, { scale: [0, 1.2, 1], rotate: [-40, 6, -12] }, { duration: 0.6, delay: 0.45 });
+      const call = li.querySelector('.sticker.call');
+      if (call) animate(call, { rotate: [12, -10, 16, -4, 12] }, { duration: 0.8, delay: 0.6 });
+    });
+  }
+  if (!calm && M.hover) items.forEach((li) => {
+    const c = li.querySelector('.case');
+    M.hover(c, () => {
+      animate(c, { y: -16, rotate: -1.8, scale: 1.05 }, spring(500, 22));
+      return () => animate(c, { y: 0, rotate: 0, scale: 1 }, spring(420, 26));
+    });
+  });
+  seen = new Set(data.items.map((i) => i.name));
+}
+
+function updateSign(first) {
+  const n = data.items.length;
+  $('#store-name').textContent = store() ? 'ForgynGames' : 'Shelf';
+  $('#tagline').textContent = store() ? 'Games and web apps · one file each, play anywhere' : 'Games · Web apps & sites, built on Ezra Mini';
+  document.title = store() ? 'ForgynGames' : 'Shelf · Ezra Mini';
+  const toFix = data.items.filter((i) => i.problems > 0).length;
+  $('#summary').textContent = !n ? (store() ? 'Opening soon' : 'Open 24/7 on the home network')
+    : store() ? `${n} title${n > 1 ? 's' : ''} on the shelf`
+    : `${n} in stock · ${toFix ? `${toFix} need fixing` : 'all checked'} · last check ${when(data.items[0].checkedAt)}`;
+  const waiting = $('#waiting');
+  const before = Number(waiting.dataset.count ?? 0);
+  waiting.hidden = store() || !inbox.length;
+  waiting.textContent = `${inbox.length} waiting for you`;
+  waiting.dataset.count = inbox.length;
+  if (inbox.length > before && !first) animate(waiting, { scale: [1, 1.15, 1], rotate: [0, -3, 3, 0] }, { duration: 0.6 });
+  if (first) animate($('#sign'), { opacity: [0, 1, 0.35, 1, 0.6, 1] }, { duration: 0.9, times: [0, 0.2, 0.3, 0.5, 0.6, 1] });
+}
+
+// The demo TV: plays the build in a CRT that powers on and off.
+const tv = $('#tv');
+const crt = tv.querySelector('.crt');
+const frame = $('#tv-frame');
+async function openTV(item, from) {
+  returnFocus = from;
+  $('#tv-title').textContent = item.title;
+  $('#tv-open').href = hrefOf(item);
+  frame.title = item.title;
+  frame.src = hrefOf(item);
+  tv.hidden = false;
+  $('#tv-close').focus();
+  animate(tv, { opacity: [0, 1] }, { duration: 0.2 });
+  animate(tv.querySelector('.tv'), { y: [90, 0], scale: [0.9, 1] }, spring(320, 26));
+  if (!calm) {
+    crt.hidden = false;
+    await animate(crt, { scaleX: [0, 1, 1], scaleY: [0.006, 0.006, 1], opacity: [1, 1, 1] }, { duration: 0.5, times: [0, 0.45, 1] });
+    await animate(crt, { opacity: [1, 0] }, { duration: 0.3 });
+    crt.hidden = true;
+  }
+  frame.focus();
+}
+async function closeTV() {
+  if (!calm) {
+    crt.hidden = false;
+    await animate(crt, { opacity: [0, 1], scaleY: [1, 0.006], scaleX: [1, 1] }, { duration: 0.25 });
+    await animate(crt, { scaleX: [1, 0] }, { duration: 0.15 });
+    await animate(tv, { opacity: [1, 0] }, { duration: 0.2 });
+    crt.hidden = true;
+  }
+  tv.hidden = true;
+  frame.src = 'about:blank';
+  returnFocus?.focus();
+}
+$('#tv-close').addEventListener('click', closeTV);
+$('#tv-full').addEventListener('click', () => frame.requestFullscreen?.());
+
+// The back of the box: the pitch, screenshots, scores and links.
+const back = $('#back');
+const card = back.querySelector('.back');
+function openBack(item, from) {
+  returnFocus = from;
+  card.className = `back ${item.kind}`;
+  $('#back-kind').textContent = LABEL[item.kind] ?? item.kind;
+  $('#back-title').textContent = item.title;
+  $('#back-pitch').textContent = item.summary || 'No pitch written yet.';
+  $('#back-shots').replaceChildren(
+    el('img', { src: `thumbs/${item.name}.png?${stamp(item)}`, alt: `${item.title} on a desktop screen` }),
+    el('img', { className: 'phone', src: `thumbs/${item.name}-phone.png?${stamp(item)}`, alt: `${item.title} on a phone` }));
+  const specs = [`${item.kb} KB, one file`, store() ? `Shipped ${when(item.shippedAt)}` : `Checked ${when(item.checkedAt)}`,
+    ...(!store() && item.problems ? [`${item.problems} to fix`] : []),
+    ...Object.entries(item.scores ?? {}).map(([k, v]) => `${k} ${v}`)];
+  $('#back-specs').replaceChildren(...specs.map((s) => el('li', {}, s)));
+  const play = el('button', { type: 'button', className: 'btn primary', innerHTML: `${icon('play')} Play` });
+  play.addEventListener('click', async () => { await closeBack(true); openTV(item, from); });
+  const links = [el('a', { className: 'btn', href: hrefOf(item), target: '_blank', rel: 'noopener' }, 'Open in a new tab'),
+    el('a', { className: 'btn', href: download(item), download: `${item.name}.html` }, 'Download')];
+  if (item.live?.pages && !store()) links.push(el('a', { className: 'btn', href: item.live.pages, target: '_blank', rel: 'noopener' }, 'Live on ForgynGames'));
+  if (item.live?.itch) links.push(el('a', { className: 'btn', href: item.live.itch, target: '_blank', rel: 'noopener' }, 'On itch.io'));
+  $('#back-actions').replaceChildren(play, ...links);
+  back.hidden = false;
+  $('#back-close').focus();
+  animate(back, { opacity: [0, 1] }, { duration: 0.2 });
+  animate(card, { rotateY: [-110, 0], opacity: [0, 1] }, spring(220, 24));
+}
+async function closeBack(keepFocus) {
+  await animate(card, { rotateY: [0, 110], opacity: [1, 0] }, { duration: 0.25 });
+  back.hidden = true;
+  if (!keepFocus) returnFocus?.focus();
+}
+$('#back-close').addEventListener('click', () => closeBack());
+for (const overlay of [tv, back]) overlay.addEventListener('click', (e) => e.target === overlay && (overlay === tv ? closeTV() : closeBack()));
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!back.hidden) closeBack();
+  else if (!tv.hidden) closeTV();
+});
+
+document.querySelectorAll('.aisles button').forEach((button) => button.addEventListener('click', () => {
+  aisle = button.dataset.aisle;
+  document.querySelectorAll('.aisles button').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+  render('all');
+}));
+
+// Live restocking: new builds and new questions show up without a refresh.
+const getJSON = (url, fallback) => fetch(url, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : fallback)).catch(() => fallback);
+let last = '';
+async function load() {
+  const manifest = await getJSON('manifest.json', { mode: 'shelf', items: [] });
+  const questions = manifest.mode === 'store' ? [] : await getJSON('inbox.json', []);
+  const next = JSON.stringify([manifest, questions]);
+  if (next === last) return;
+  const first = !last;
+  last = next;
+  data = manifest;
+  inbox = Array.isArray(questions) ? questions : [];
+  updateSign(first);
+  render(first ? 'all' : 'new');
+}
+load();
+setInterval(load, 20000);
+</script>
+</body>
+</html>
