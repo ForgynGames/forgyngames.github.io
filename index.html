@@ -522,7 +522,15 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
   width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); background: #e9dcc0 url(art/ezra-1.webp) no-repeat;
   background-size: 330%; background-position: 46% 7%;
 }
+.msg.agent .say :is(.done, .tail) { display: contents; }
+.msg.agent .say .tail > p { white-space: pre-wrap; }
+/* An agent's steps fold into one line: the latest step and how many, opened for the full list */
 .msg.tool { align-self: flex-start; border: 0; box-shadow: none; padding: 0 4px 0 46px; color: var(--muted); font: italic 500 .86rem/1.3 var(--f-body); }
+.msg.tool summary { cursor: pointer; list-style: none; overflow-wrap: anywhere; }
+.msg.tool summary::-webkit-details-marker { display: none; }
+.msg.tool summary::before { content: "▸ "; font-style: normal; }
+.msg.tool[open] summary::before { content: "▾ "; }
+.msg.tool ol { margin: 6px 0 0; padding-left: 1.4em; display: grid; gap: 3px; overflow-wrap: anywhere; }
 .msg.error { align-self: flex-start; border-color: var(--fail, #b3261e); color: #8f1d17; background: #fff3f1; }
 .thinking { margin: 0; padding-left: 46px; color: var(--muted); font: italic 500 .9rem/1.2 var(--f-body); }
 .dots span { display: inline-block; }
@@ -530,8 +538,12 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
   .dots span { animation: blink 1.2s steps(1) infinite; }
   .dots span:nth-child(2) { animation-delay: .2s; } .dots span:nth-child(3) { animation-delay: .4s; }
 }
-.composer { display: grid; gap: 8px; position: sticky; bottom: -18px; padding: 10px 0 0; background: var(--plate); }
-.composer-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.composer { display: grid; gap: 8px; position: sticky; bottom: -18px; margin-top: auto; padding: 10px 0 0; background: var(--plate); }
+.composer textarea { field-sizing: content; max-height: 30dvh; }
+.composer-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.composer-actions .thinking { margin: 0 auto 0 0; padding: 0; }
+.composer-actions .idle { visibility: hidden; } /* keeps its place, so nothing shifts when an agent starts or stops */
+.jump { position: absolute; top: -50px; left: 0; right: 0; margin-inline: auto; width: max-content; }
 .toast { /* Ezra's quick lines, in a small bubble over his head */
   position: fixed; right: var(--ezra-right); bottom: var(--bubble-bottom); z-index: 30;
   min-width: 210px; max-width: min(320px, calc(100vw - 24px)); padding: 12px 14px; border: 3px solid var(--ink); border-radius: 14px;
@@ -542,6 +554,8 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
   background: var(--plate); border: solid var(--ink); border-width: 0 3px 3px 0;
 }
 .toast[hidden] { display: none; }
+.counter:not([hidden]) ~ .toast { bottom: auto; top: 12px; } /* never over the conversation you're in */
+.counter:not([hidden]) ~ .toast::after { display: none; }
 .toast.action { cursor: pointer; }
 .status { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .status li { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; background: #fffdf6; border: 3px solid var(--ink); border-radius: 8px; padding: 10px 12px; box-shadow: 4px 4px 0 rgb(28 25 21 / .22); }
@@ -1550,6 +1564,9 @@ function md(text) {
 const counter = $('#counter');
 let tab = 'questions';
 let thread = null;
+const drafts = new Map(); // an unsent message stays with its conversation when you switch away and back
+const unread = new Set(); // conversations that finished while you were elsewhere
+const talkTab = () => { $('#tab-t').textContent = unread.size ? `Talk (${unread.size})` : 'Talk'; };
 const projectTitle = (name) => data.items.find((i) => i.name === name)?.title ?? name;
 function openCounter(which = tab) {
   $('.tabs').hidden = !hub.allowed;
@@ -1580,6 +1597,7 @@ function showTab(which) {
   if (which === 'questions') renderQuestions();
   else if (which === 'room') renderRoom();
   else if (!thread) renderConversations();
+  lastPanel = panelKey();
 }
 $('#tab-q').addEventListener('click', () => showTab('questions'));
 $('#tab-t').addEventListener('click', () => { closeThread(); showTab('talk'); });
@@ -1587,6 +1605,7 @@ $('#tab-r').addEventListener('click', () => showTab('room'));
 $('#counter-close').addEventListener('click', closeCounter);
 $('#waiting').addEventListener('click', (e) => { if (hub.allowed) { e.preventDefault(); openCounter('questions'); } });
 
+const notesDraft = new Map(); // what you've typed on a question card survives the card being redrawn
 const CHOICES = (title) => (/ship\?/i.test(title) ? ['Ship it', 'Fix first', 'Not yet']
   : /look\?/i.test(title) ? ['Looks right', 'Change the look', 'Start the look over']
   : /fun\?|useful\?/i.test(title) ? ['Keep going', 'Change it', 'Shelve it'] : ['Yes', 'Change it', 'No']);
@@ -1599,6 +1618,8 @@ function questionCard(q) {
   const item = data.items.find((i) => i.name === q.project);
   const [yes, change, no] = CHOICES(q.title);
   const notes = el('textarea', { placeholder: `Notes for the agent (needed for "${change}")` });
+  notes.value = notesDraft.get(q.number) ?? '';
+  notes.addEventListener('input', () => notesDraft.set(q.number, notes.value));
   notes.setAttribute('aria-label', `Notes on ${q.title}`);
   const card = el('article', { className: 'question' });
   const buttons = [['yes', yes, 'go'], ['change', change, 'warn'], ['no', no, '']].map(([decision, label, tone]) => {
@@ -1653,7 +1674,7 @@ function renderConversations() {
       () => (s ? openThread(s) : openThread({ title: r.title }, `#${r.number}`)));
   });
   const talks = hub.sessions.filter((s) => !s.request).map((s) =>
-    row(sessionTitle(s), `${s.status === 'working' ? 'Working now' : 'Idle'} · ${short(s.updatedAt)}`, s.status, () => openThread(s)));
+    row(sessionTitle(s), `${unread.has(s.id) ? 'New reply · ' : ''}${s.status === 'working' ? 'Working now' : 'Idle'} · ${short(s.updatedAt)}`, s.status, () => openThread(s)));
   $('#tab-talk').replaceChildren(ezraLine('What are we talking about? Start something new, or pick up where we left off.'),
     el('div', { className: 'actions' }, idea, factory, request),
     ...(requests.length ? [el('h3', {}, 'Client requests'), ...requests] : []),
@@ -1728,20 +1749,26 @@ async function openThread(s, autoText) {
   closeThread();
   showTab('talk');
   const messages = el('div', { className: 'messages' });
-  const working = el('p', { className: 'thinking', hidden: true }, "Ezra's on it", el('span', { className: 'dots', ariaHidden: 'true' }, el('span', {}, '.'), el('span', {}, '.'), el('span', {}, '.')));
+  const working = el('p', { className: 'thinking idle' }, "Ezra's on it", el('span', { className: 'dots', ariaHidden: 'true' }, el('span', {}, '.'), el('span', {}, '.'), el('span', {}, '.')));
   const input = el('textarea', { placeholder: s.id ? 'Reply…' : s.project ? `What should change in ${projectTitle(s.project)}?`
     : s.factory ? 'Anything about the factory itself: logins, services, how things are going.'
     : 'Describe the idea: what it is, who it is for, how it should feel.' });
   input.setAttribute('aria-label', 'Message');
+  const fresh = `new:${s.project ?? (s.factory ? 'ezra' : s.title)}`;
+  input.value = drafts.get(s.id ?? fresh) ?? '';
+  input.addEventListener('input', () => drafts.set(t.id ?? fresh, input.value));
   const sendButton = el('button', { type: 'submit', className: 'btn primary small' }, 'Send');
-  const stop = el('button', { type: 'button', className: 'btn small', hidden: true }, 'Stop');
-  const form = el('form', { className: 'composer' }, input, el('div', { className: 'composer-actions' }, stop, sendButton));
+  const stop = el('button', { type: 'button', className: 'btn small idle' }, 'Stop');
+  const jump = el('button', { type: 'button', className: 'btn small jump', hidden: true }, '↓ New');
+  jump.addEventListener('click', () => toBottom(true));
+  const form = el('form', { className: 'composer' }, jump, input, el('div', { className: 'composer-actions' }, working, stop, sendButton));
   const back = el('button', { type: 'button', className: 'icon', innerHTML: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>' });
   back.setAttribute('aria-label', 'All conversations');
   back.addEventListener('click', () => { closeThread(); renderConversations(); });
   $('#tab-talk').replaceChildren(el('div', { className: 'thread-head' }, back, el('h3', {}, sessionTitle(s))),
-    messages, working, form);
-  const t = { id: s.id, project: s.project, factory: s.factory, messages, working, stop, live: null, source: null };
+    messages, form);
+  const t = { id: s.id, project: s.project, factory: s.factory, messages, working, stop, jump, live: null, steps: null, source: null };
+  if (s.id && unread.delete(s.id)) talkTab();
   // A new conversation starts with Ezra saying something, the way a clerk would.
   if (!s.id && !autoText) {
     const chip = (label, go) => { const b = el('button', { type: 'button', className: 'btn small' }, label); b.addEventListener('click', go); return b; };
@@ -1762,6 +1789,7 @@ async function openThread(s, autoText) {
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
+    drafts.delete(t.id ?? fresh);
     sendButton.disabled = true;
     try { await say(t, text); } catch (err) { toast(err.message); input.value = text; }
     sendButton.disabled = false;
@@ -1784,66 +1812,101 @@ async function attach(t) {
   t.messages.replaceChildren();
   log.forEach((e) => show(t, e, false));
   setWorking(t, status === 'working');
-  t.source = new EventSource(`/api/sessions/${t.id}/stream`);
+  toBottom();
+  // The stream starts where the log ends, and after a dropped connection the browser catches up on what it missed.
+  t.source = new EventSource(`/api/sessions/${t.id}/stream?after=${log.length - 1}`);
   t.source.onmessage = (m) => { if (thread === t) show(t, JSON.parse(m.data), true); };
 }
 function setWorking(t, on) {
-  t.working.hidden = !on;
-  t.stop.hidden = !on;
+  t.working.classList.toggle('idle', !on);
+  t.stop.classList.toggle('idle', !on);
 }
+// The conversation follows new words only while you're at the bottom. Scrolled up to read, you stay put and "New" shows.
+const talkBox = $('#tab-talk');
+const atBottom = () => talkBox.scrollHeight - talkBox.scrollTop - talkBox.clientHeight < 60;
+function toBottom(smooth) {
+  talkBox.scrollTo({ top: talkBox.scrollHeight, behavior: smooth && !calm ? 'smooth' : 'auto' });
+  if (thread) thread.jump.hidden = true;
+}
+function stayPut(t, change, force) {
+  const stick = force || atBottom();
+  change();
+  if (stick) toBottom();
+  else t.jump.hidden = false;
+}
+talkBox.addEventListener('scroll', () => { if (thread && atBottom()) thread.jump.hidden = true; });
 // Ezra's side of a conversation: his face and a speech bubble.
 function ezraMsg() {
   const body = el('div', { className: 'say md' });
   return { node: el('div', { className: 'msg agent' }, el('span', { className: 'ezra-face', ariaHidden: 'true' }), body), body };
 }
-// His replies type out at a steady pace as they stream in, catching up when the words arrive faster than he types.
-function reveal(live) {
-  if (calm) { live.body.innerHTML = md(live.text); live.shown = live.text.length; return; }
-  if (live.raf) return;
-  const tick = () => {
-    const behind = live.text.length - live.shown;
-    if (behind <= 0) { live.raf = null; if (live.ended) live.body.append(moreMark()); return; }
-    live.shown += Math.max(2, Math.ceil(behind / 10));
-    live.body.innerHTML = md(live.text.slice(0, live.shown));
-    live.node.scrollIntoView({ block: 'end' });
-    live.raf = requestAnimationFrame(tick);
-  };
-  live.raf = requestAnimationFrame(tick);
+// A reply streams in place. Each paragraph is added once it's finished and never redrawn, so you can select and copy
+// mid-reply; the one being written shows as plain text, or as a growing code block, until it ends.
+function paint(t, m, now) {
+  const draw = () => stayPut(t, () => {
+    m.raf = null;
+    if (!m.text.startsWith(m.drawn)) { m.done.replaceChildren(); m.drawn = ''; } // the reply changed under us: start over
+    const fences = (text) => text.split('```').length - 1;
+    let cut = m.final ? m.text.length : m.text.lastIndexOf('\n\n') + 1;
+    while (cut > 0 && fences(m.text.slice(0, cut)) % 2) cut = m.text.lastIndexOf('\n\n', cut - 2) + 1; // never inside a code block
+    if (!m.final && fences(m.text) && !(fences(m.text) % 2)) cut = Math.max(cut, m.text.lastIndexOf('```') + 3);
+    if (cut > m.drawn.length) {
+      m.done.insertAdjacentHTML('beforeend', md(m.text.slice(m.drawn.length, cut)));
+      m.drawn = m.text.slice(0, cut);
+    }
+    const rest = m.text.slice(m.drawn.length);
+    if (rest.includes('```')) m.tail.innerHTML = md(rest);
+    else m.tail.replaceChildren(...(rest.trim() ? [el('p', {}, rest)] : []));
+  });
+  if (now) draw();
+  else m.raf ??= requestAnimationFrame(draw);
 }
 function show(t, e, live) {
-  const add = (node) => {
+  const add = (node, force) => stayPut(t, () => {
     t.messages.append(node);
-    if (live) animate(node, { y: [8, 0], opacity: [0, 1] }, { duration: 0.2 });
-    node.scrollIntoView({ block: 'end' });
-  };
+    if (live) animate(node, { opacity: [0, 1] }, { duration: 0.2 });
+  }, force);
   const speak = () => {
-    const m = ezraMsg();
+    const m = { ...ezraMsg(), text: '', drawn: '', raf: null, final: false };
+    m.done = el('div', { className: 'done' });
+    m.tail = el('div', { className: 'tail' });
+    m.body.append(m.done, m.tail);
     add(m.node);
-    t.last = { ...m, text: '', shown: 0, raf: null, ended: false };
-    return t.last;
+    t.steps = null;
+    return (t.last = m);
   };
   if (e.kind === 'user') {
     t.live = null;
+    t.steps = null;
     t.messages.querySelectorAll('.more').forEach((m) => m.remove());
-    add(el('div', { className: 'msg user' }, e.text));
+    add(el('div', { className: 'msg user' }, e.text), true);
     setWorking(t, true);
-  } else if (e.kind === 'delta') {
+  } else if (e.kind === 'delta' || e.kind === 'partial') { // a partial is the whole reply so far, for a page that joins mid-reply
     t.live ??= speak();
-    t.live.text += e.text;
-    if (live) reveal(t.live);
-    else t.live.body.innerHTML = md(t.live.text);
+    t.live.text = e.kind === 'partial' ? e.text : t.live.text + e.text;
+    paint(t, t.live);
   } else if (e.kind === 'text') {
     const m = t.live ?? speak();
-    m.text = e.text;
-    if (live) reveal(m);
-    else { m.body.innerHTML = md(e.text); m.shown = e.text.length; }
+    Object.assign(m, { text: e.text, final: true });
+    paint(t, m, !live);
     t.live = null;
-  } else if (e.kind === 'tool') { t.live = null; add(el('div', { className: 'msg tool' }, `Ezra ${e.text}`)); }
-  else if (e.kind === 'done') {
+  } else if (e.kind === 'tool') {
     t.live = null;
+    if (!t.steps) {
+      t.steps = { n: 0, list: el('ol'), sum: el('summary') };
+      add(el('details', { className: 'msg tool' }, t.steps.sum, t.steps.list));
+    }
+    const steps = t.steps;
+    stayPut(t, () => {
+      steps.list.append(el('li', {}, e.text));
+      steps.sum.textContent = `Ezra ${e.text}${++steps.n > 1 ? ` · ${steps.n} steps` : ''}`;
+    });
+  } else if (e.kind === 'done') {
+    t.live = null;
+    t.steps = null;
     setWorking(t, false);
     if (!e.ok) add(el('div', { className: 'msg error' }, e.error ? `Stopped: ${e.error}` : 'Stopped.'));
-    else if (t.last) { t.last.ended = true; if (!t.last.raf) t.last.body.append(moreMark()); }
+    else t.last?.body.append(moreMark());
   }
 }
 
@@ -1918,16 +1981,25 @@ ezra.addEventListener('click', () => {
 // Live restocking: new builds, new questions and conversation updates show up without a refresh.
 const getJSON = (url, fallback) => fetch(url, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : fallback)).catch(() => fallback);
 let lastShelf = '';
-let lastHub = '';
+let lastPanel = '';
+// What the open panel shows: it's redrawn only when this changes.
+const panelKey = () => tab + JSON.stringify(tab === 'questions' ? hub.questions
+  : tab === 'room' ? [hub.sessions.map((s) => s.status), [...lineup.values()]]
+  : [hub.sessions.map((s) => [s.id, s.status, sessionTitle(s)]), hub.requests, [...unread]]);
 async function load() {
   const manifest = await getJSON('manifest.json', { mode: 'shelf', items: [] });
   const state = manifest.mode === 'store' ? null : await getJSON('api/hub', null);
-  const before = new Map(hub.sessions.map((s) => [s.id, s.status]));
+  const before = new Map(hub.sessions.map((s) => [s.id, s]));
   hub = state?.allowed ? state : { allowed: false, sessions: [], questions: [], requests: [] };
   for (const s of hub.sessions) {
-    if (before.get(s.id) === 'working' && s.status === 'idle' && !(thread?.id === s.id && !counter.hidden))
-      toast(s.factory ? 'Done! Tap here to read it.' : `${sessionTitle(s)} is done. Tap here to read it.`, () => { openCounter('talk'); openThread(s); });
+    const was = before.get(s.id); // finished since the last look, however short the run
+    if (was && s.status === 'idle' && (was.status === 'working' || was.updatedAt !== s.updatedAt) && !(thread?.id === s.id && !counter.hidden)) {
+      unread.add(s.id);
+      // A finished agent never interrupts the conversation you're in: the Talk tab and its row show it instead.
+      if (counter.hidden) toast(s.factory ? 'Done! Tap here to read it.' : `${sessionTitle(s)} is done. Tap here to read it.`, () => { openCounter('talk'); openThread(s); });
+    }
   }
+  talkTab();
   const questions = hub.allowed ? hub.questions : manifest.mode === 'store' ? [] : await getJSON('inbox.json', []);
   if (hub.allowed) lineup = new Map(((await getJSON('api/projects', null))?.projects ?? []).map((p) => [p.name, p]));
   ezraState();
@@ -1944,16 +2016,11 @@ async function load() {
     tune(Math.min(channel, Math.max(data.items.length - 1, 0)), true);
     if (first) follow();
   }
-  const hubKey = JSON.stringify(hub);
-  if (hubKey !== lastHub) {
-    lastHub = hubKey;
-    if (!counter.hidden && tab === 'questions') renderQuestions();
-    if (!counter.hidden && tab === 'talk' && !thread) renderConversations();
-    if (!counter.hidden && tab === 'room') renderRoom();
-  }
+  const typing = document.activeElement?.matches('textarea, input') && $(TABS[tab][1]).contains(document.activeElement);
+  if (!counter.hidden && !(tab === 'talk' && thread) && !typing && panelKey() !== lastPanel) showTab(tab);
 }
 load();
 setInterval(load, 10000);
 </script>
-</body>
+<script>/* privacy-first counts (tools/counts): no cookies, IPs or IDs */(()=>{const u="https://forgyngames-counts.counts.workers.dev",p="store",k='fg-first-'+p,now=Date.now();let f=now;try{f=+localStorage.getItem(k)||now;localStorage.setItem(k,f)}catch{}const d=Math.floor((now-f)/864e5),hit=(e,s=0)=>{try{navigator.sendBeacon(u+'/hit',new Blob([JSON.stringify({p,e,d,s})],{type:'text/plain'}))}catch{}};hit('play');addEventListener('pagehide',()=>hit('leave',Math.round((Date.now()-now)/1e3)),{once:true})})()</script></body>
 </html>
