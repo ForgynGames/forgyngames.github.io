@@ -702,7 +702,8 @@ const hrefOf = (item) => item.href ?? (store() ? `${item.name}/` : `${item.name}
 const slug = (text) => text.trim().toLowerCase().replace(/\s+/g, '-');
 const calls = (item) => inbox.filter((issue) => issue.title.includes(':') && slug(issue.title.split(':')[0]) === item.name);
 const art = (item) => `${item.cover ? 'covers' : 'thumbs'}/${item.name}.png?${stamp(item)}`;
-const download = (item) => (store() ? `${item.name}/index.html` : `${item.name}.html`);
+const download = (item) => item.download ?? (store() ? `${item.name}/index.html` : `${item.name}.html`); // a folder build comes as a zip
+const saveAs = (item) => item.download ?? `${item.name}.html`;
 
 // The front and the back of a box, printed the same way on the shelf and in your hands.
 const fallback = (e) => { e.target.onerror = null; e.target.src = 'art/coming-soon.webp'; };
@@ -746,7 +747,7 @@ function box(item) {
     if (e.pointerType === 'mouse') turnTimer = setTimeout(() => caseButton.classList.add('turned'), 380); // turned over in place, its own size, like in your hand
   });
   caseButton.addEventListener('pointerleave', () => { clearTimeout(turnTimer); caseButton.classList.remove('turned'); stopReading(); });
-  const save = el('a', { className: 'icon', href: download(item), download: `${item.name}.html`, title: 'Download', innerHTML: icon('download') });
+  const save = el('a', { className: 'icon', href: download(item), download: saveAs(item), title: 'Download', innerHTML: icon('download') });
   save.setAttribute('aria-label', `Download ${item.title}`);
   const p = lineup.get(item.name);
   const tag = el('p', { className: 'tag' }, el('strong', {}, `${item.kb} KB`),
@@ -1078,9 +1079,21 @@ const demoSet = $('#demo-set');
 let channel = 0;
 let demoTimer;
 let demoImg, demoVideo;
-const demoItem = () => data.items[channel];
+// The TVs are for games. Sites and apps open in their own tab, where they get the whole window.
+const onTV = (item) => item.kind === 'game';
+const tvItems = () => data.items.filter(onTV);
+const demoItem = () => tvItems()[channel];
+// The button that plays a product: the TV for a game, a new tab for a site or an app
+function playButton(item, from, label, className) {
+  if (onTV(item)) {
+    const b = el('button', { type: 'button', className, innerHTML: `${icon('play')} ${label ?? 'Play it'}` });
+    b.addEventListener('click', () => { from?.(); openTV(item, b); });
+    return b;
+  }
+  return el('a', { className, href: hrefOf(item), target: '_blank', rel: 'noopener', innerHTML: `${icon('play')} Open it in a new tab` });
+}
 function tune(n, quiet) {
-  const items = data.items;
+  const items = tvItems();
   demo.hidden = false;
   $('#demo-play').hidden = !items.length;
   if (!items.length) {
@@ -1121,7 +1134,7 @@ function tune(n, quiet) {
   $('#demo-ch').textContent = `CH ${chName(channel)} · Now showing`;
   $('#demo-title').textContent = item.title;
   $('#demo-pitch').textContent = item.summary || '';
-  $('#demo-play').innerHTML = `${icon('play')} ${item.kind === 'game' ? 'Play' : 'Try'} ${item.title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}`;
+  $('#demo-play').innerHTML = `${icon('play')} Play ${item.title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}`;
   $('#demo-screen').setAttribute('aria-label', `Play ${item.title}`);
   if (!quiet) osd(demoSet, `CH ${chName(channel)}`);
   schedule();
@@ -1163,8 +1176,8 @@ function follow() {
   const [, kind, name] = location.hash.match(/^#(play|box)\/([\w-]+)$/) ?? [];
   const item = data.items.find((i) => i.name === name);
   if (!item) return;
-  if (kind === 'play') openTV(item, null);
-  else pickUp(item, onShelf(item));
+  if (kind === 'play' && onTV(item)) openTV(item, null);
+  else pickUp(item, onShelf(item)); // a site or app is opened from its box: a tab can only open on a click
 }
 addEventListener('hashchange', follow);
 
@@ -1206,7 +1219,7 @@ async function closeTV() {
 }
 wireSet(tvSet, {
   channel: (d) => {
-    const items = data.items;
+    const items = tvItems();
     const next = items[(items.indexOf(playing) + d + items.length) % items.length];
     retune(tvSet);
     play(next);
@@ -1237,7 +1250,7 @@ function pickUp(item, from, back = false) {
   holding = { item, from };
   held.className = `held ${item.kind}`;
   held.replaceChildren(frontFace(item), backFace(item));
-  $('#hold-kind').textContent = `${(LABEL[item.kind] ?? item.kind).toUpperCase()} · ${item.kb} KB · ONE FILE`;
+  $('#hold-kind').textContent = `${(LABEL[item.kind] ?? item.kind).toUpperCase()} · ${item.kb} KB · ${item.download ? 'A FOLDER' : 'ONE FILE'}`;
   $('#hold-title').textContent = item.title;
   const specs = [store() ? `Shipped ${when(item.shippedAt)}` : `Checked ${when(item.checkedAt)}`,
     ...(!store() && item.problems ? [`${item.problems} to fix`] : []),
@@ -1248,10 +1261,9 @@ function pickUp(item, from, back = false) {
   $('#hold-line').replaceChildren(...(p ? [lineSection(p)] : []));
   const button = (label, onClick, className = 'btn') => { const b = el('button', { type: 'button', className }, label); b.addEventListener('click', onClick); return b; };
   const linkBtn = (label, href) => el('a', { className: 'btn', href, target: '_blank', rel: 'noopener' }, label);
-  const playBtn = el('button', { type: 'button', className: 'btn primary', innerHTML: `${icon('play')} ${item.kind === 'game' ? 'Play it' : 'Try it'} on the TV` });
-  playBtn.addEventListener('click', () => { letGo(); openTV(item, from); });
+  const playBtn = playButton(item, letGo, 'Play it on the TV', 'btn primary');
   const actions = [playBtn, button('Turn it over', () => turnTo(angle + 180)),
-    el('a', { className: 'btn', href: download(item), download: `${item.name}.html` }, 'Take it home')];
+    el('a', { className: 'btn', href: download(item), download: saveAs(item) }, 'Take it home')];
   if (item.trailer) actions.splice(1, 0, button('Watch the trailer', () => { letGo(); openTV(item, from, true); }));
   if (p && !item.client) actions.splice(1, 0, publishButton(item, p));
   if (hub.allowed && !store()) actions.push(button('Ask Ezra about it', () => {
@@ -1612,9 +1624,7 @@ function questionCard(q) {
   });
   const links = el('div', { className: 'actions' });
   if (item) {
-    const play = el('button', { type: 'button', className: 'btn small', innerHTML: `${icon('play')} Play it` });
-    play.addEventListener('click', () => openTV(item, play));
-    links.append(play);
+    links.append(playButton(item, null, 'Play it', 'btn small'));
   }
   card.append(el('p', { className: 'q-project' }, q.project ? projectTitle(q.project) : 'The factory'),
     el('h3', {}, q.title.split(':').slice(1).join(':').trim() || q.title),
@@ -1871,7 +1881,7 @@ function renderGuest() {
   const line = el('p', { className: 'ezra-line' });
   const play = el('button', { type: 'button', className: 'btn primary small', innerHTML: `${icon('play')} Play what's on the TV` });
   play.addEventListener('click', async () => { await closeCounter(); openTV(demoItem(), ezra); });
-  panel.replaceChildren(line, ...(data.items.length ? [el('div', { className: 'actions' }, play)] : []));
+  panel.replaceChildren(line, ...(tvItems().length ? [el('div', { className: 'actions' }, play)] : []));
   typeOut(line, GREETING[store() ? 'store' : 'shelf']);
 }
 // He waves with a "!" when something is waiting on Brandon, and looks down at the register while agents work.
