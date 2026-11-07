@@ -1,4 +1,20 @@
 {
   "mode": "store",
-  "items": []
+  "items": [
+    {
+      "name": "moth-light",
+      "title": "Moth Light",
+      "kind": "game",
+      "href": "moth-light/",
+      "kb": 516,
+      "summary": "You are a moth whose own glow is running out: gather drifting motes of light to keep shining, while the candle you can't stop circling pulls you closer.",
+      "cover": true,
+      "shippedAt": "2026-11-07T05:14:03.978Z",
+      "addedAt": "2026-11-07T05:14:03.978Z",
+      "live": {
+        "pages": "https://forgyngames.github.io/moth-light/"
+      },
+      "trailer": "trailers/moth-light.mp4"
+    }
+  ]
 }
