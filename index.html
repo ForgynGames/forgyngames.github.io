@@ -13,15 +13,20 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="art/icon.png">
 <link rel="apple-touch-icon" href="art/icon.png">
-<meta name="apple-mobile-web-app-title" content="Shelf">
+<meta name="apple-mobile-web-app-title" content="ForgynGames">
 <meta name="theme-color" content="#1f4636">
+<script>
+// The catalog, asked for first thing (before any stylesheet, which would hold it back) so it arrives with Motion rather than after it. An unchanged one costs a 304.
+const readStock = () => fetch('manifest.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+const stock = readStock();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;600&family=Bungee&family=VT323&display=swap">
 <style>
 /* A late-90s neighborhood video store: green slatwall, maple shelves, hanging aisle signs, boxed copies
-   face-out with price tags on the shelf edge, a CRT demo TV on the counter. The same page is the private
-   shelf on Ezra Mini and the public ForgynGames store; manifest.json says which. */
+   face-out with price tags on the shelf edge, a CRT demo TV on the counter. This is the public ForgynGames store
+   (npm run store publishes it); Brandon's dev view is tools/review.html. */
 :root {
   --wall: #1f4636;
   --groove: #15342a;
@@ -33,7 +38,6 @@
   --game: #b3312b;
   --site: #2b5797;
   --app: #d99a1e;
-  --pass: #2f8a4c;
   --fix: #f2c230;
   --tv: #2a2724;
   --f-sign: "Bungee", "Arial Black", Impact, sans-serif;
@@ -88,26 +92,14 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .sign-side { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 @media (max-width: 760px), (max-height: 500px) {
   .sign { padding: 8px 12px; gap: 6px 12px; }
-  .sign-text, #to-store, #waiting { display: none; } /* Ezra's "!" says what's waiting */
-  .waiting { padding: 7px 9px 6px; font-size: .75rem; }
+  .sign-text { display: none; }
 }
-.waiting {
-  font: 400 .9rem/1 var(--f-sign); padding: 10px 12px 9px; border: 3px solid var(--ink); border-radius: 7px;
-  background: var(--game); color: #fff; text-decoration: none; box-shadow: 0 4px 0 var(--ink);
-}
-.waiting:focus-visible, .lamp:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
 .open-sign { /* "Come in, we're OPEN", painted on the store's sign */
   margin: 0; rotate: -3deg; text-align: center; color: var(--game); font: 400 1.6rem/1 var(--f-sign);
 }
 .itch { font: 700 .95rem/1 var(--f-cond); color: var(--ink); text-underline-offset: 3px; padding: 12px 4px; } /* the store's other door, set by publishing when it exists */
 .itch:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
 .open-sign small { display: block; margin-bottom: 3px; font: 700 .7rem/1 var(--f-cond); letter-spacing: .04em; color: var(--muted); text-transform: uppercase; }
-.lamp { /* the dev view's back-room light */
-  display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px 7px; border: 3px solid var(--ink); border-radius: 7px; cursor: pointer;
-  background: var(--ink); color: var(--led); font: 400 1.05rem/1 var(--f-led); box-shadow: 0 4px 0 #000;
-}
-.lamp::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--led); }
-.lamp.warn { color: var(--fix); } .lamp.warn::before { background: var(--fix); }
 
 /* The floor: aisles on the left, the counter on the right with the demo TV above Ezra's register */
 .floor {
@@ -195,7 +187,6 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 }
 .band { background: var(--band); color: #fff; font: 400 clamp(.66rem, 4.4cqi, 1rem)/1 var(--f-sign); padding: .5em .7em .42em; letter-spacing: .04em; border-radius: 0 6px 0 0; }
 .app .band { color: var(--ink); }
-.band.client { background: var(--ink); color: var(--plate); } /* client work: private, made for someone else */
 .art img { flex: 1; min-height: 0; width: 100%; object-fit: cover; object-position: top center; display: block; background: #2a2622; }
 .title { padding: 8px 9px 10px; font: 800 clamp(1.05rem, 7cqi, 1.7rem)/1.02 var(--f-cond); text-wrap: balance; background: linear-gradient(transparent, rgb(0 0 0 / .35)), var(--ink); }
 /* The back cover: a screenshot, the pitch and the fine print, sized to the box it is printed on */
@@ -207,24 +198,14 @@ h1 { margin: 0; font-family: var(--f-sign); font-weight: 400; font-size: clamp(1
 .held .back .blurb { --lines: 10; font-size: clamp(.95rem, 5.4cqi, 1.3rem); }
 .back .fine { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; padding: 6px 8px 8px; font: 700 clamp(.6rem, 4.2cqi, .9rem)/1.1 var(--f-cond); color: var(--muted); }
 .barcode { width: 34%; height: clamp(14px, 11cqi, 30px); background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 3px, var(--ink) 3px 4px, transparent 4px 7px); }
-.sticker {
-  position: absolute; top: 15%; right: -8px; width: 35%; aspect-ratio: 1; border-radius: 50%; z-index: 1;
-  display: grid; place-items: center; text-align: center; transform: rotate(12deg);
-  font: 800 clamp(.66rem, 4.6cqi, 1.1rem)/1 var(--f-cond); letter-spacing: .02em; text-transform: uppercase;
-  box-shadow: 0 2px 4px rgb(0 0 0 / .4), inset 0 0 0 3px rgb(255 255 255 / .55);
-}
-/* Safari draws a face's rotated stickers through the back of the box, so they hide whenever the back is up */
-.case.turned .front :is(.sticker, .starburst), .held.back-up .front :is(.sticker, .starburst) { visibility: hidden; transition: visibility 0s .15s; }
+/* Safari draws a face's rotated sticker through the back of the box, so it hides whenever the back is up */
+.case.turned .front .starburst, .held.back-up .front .starburst { visibility: hidden; transition: visibility 0s .15s; }
 /* Each face shows only while its side faces you, swapping halfway through the turn: some WebKit builds ignore
    backface-visibility and draw a box's back, mirrored, through its front */
 .face { transition: visibility 0s .15s; }
 .face.back { visibility: hidden; }
 .case.turned .face.back, .held.back-up .face.back, .reader .face.back { visibility: visible; }
 .case.turned .face.front, .held.back-up .face.front { visibility: hidden; }
-.sticker.pass { background: var(--pass); color: #fff; }
-.sticker.fix { background: var(--fix); color: var(--ink); }
-.sticker.call { background: var(--game); color: #fff; }
-.sticker.store { background: var(--site); color: #fff; }
 .starburst {
   position: absolute; left: -14px; bottom: 15%; width: 34%; aspect-ratio: 1; z-index: 1;
   display: grid; place-items: center; transform: rotate(-12deg); color: var(--ink); font: 400 clamp(.6rem, 4cqi, .95rem)/1 var(--f-sign);
@@ -344,9 +325,6 @@ button.glass { cursor: pointer; }
 }
 .tag strong { font: 800 .98rem/1 var(--f-cond); color: var(--ink); }
 .tag time { margin-right: auto; }
-.tag .stage { margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 3px 5px 2px; border-radius: 3px;
-  font: 400 .95rem/1 var(--f-led); letter-spacing: .03em; background: var(--ink); color: var(--led); }
-.tag .stage.wait { background: var(--game); color: #fff; }
 .icon { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 3px; background: none; color: var(--ink); cursor: pointer; }
 .icon:hover, .icon:focus-visible { background: var(--plate); outline: none; }
 .icon svg { width: 15px; height: 15px; }
@@ -369,30 +347,6 @@ button.glass { cursor: pointer; }
 .held:active { cursor: grabbing; }
 .held .face { box-shadow: inset 2px 0 0 rgb(255 255 255 / .18), 18px 26px 34px rgb(0 0 0 / .5); }
 .hold-info { position: relative; padding: 20px 22px 18px; width: min(400px, 100%); max-height: calc(100dvh - 40px); overflow: auto; scrollbar-width: thin; }
-/* Dev view: where the product is on the production line, and how it got there */
-.line { margin: 0 0 16px; padding: 12px 12px 10px; border: 2px solid var(--ink); border-radius: 8px; background: #fffdf6; }
-.line h3 { margin: 0 0 8px; font: 400 .78rem/1 var(--f-sign); letter-spacing: .05em; color: var(--muted); }
-.track { display: flex; gap: 3px; margin: 0; padding: 0; list-style: none; }
-.track li { flex: 1; height: 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--plate); }
-.track li.done { background: var(--pass); }
-.track li.now { background: var(--fix); }
-.track li.now.wait { background: var(--game); }
-@media (prefers-reduced-motion: no-preference) { .track li.now { animation: blink 1s steps(1) infinite; } }
-.line .where { margin: 8px 0 0; font: 400 1.2rem/1.1 var(--f-led); }
-.history { margin: 8px 0 0; padding: 8px 0 0; list-style: none; display: grid; gap: 4px; border-top: 2px dashed rgb(28 25 21 / .2); font-size: .88rem; }
-.history li { display: flex; justify-content: space-between; gap: 10px; }
-.history li span:last-child { color: var(--muted); text-align: right; }
-.line .facts { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
-.line .autopilot { margin: 6px 0 0; font-size: .85rem; color: var(--muted); }
-.line .autopilot strong { color: var(--ink); }
-.linkish { padding: 10px 4px; border: 0; background: none; font: inherit; font-weight: 600; color: var(--game); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.linkish:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
-.btn.go { background-color: var(--pass); color: #fff; }
-.btn.go:hover { background-color: #359a56; }
-.btn.trash { color: var(--game); } /* quiet, last in the row, until it's asked twice */
-.btn.trash.armed { background-color: var(--game); color: #fff; }
-.dot.warn { background: var(--fix); }
-.mode { display: inline-block; margin: 5px 0 0; padding: 4px 7px 3px; border-radius: 4px; font: 400 1rem/1 var(--f-led); letter-spacing: .03em; background: var(--ink); color: var(--led); }
 .hold-info .kind { margin: 0; font: 400 1.15rem/1 var(--f-led); letter-spacing: .06em; color: var(--muted); }
 .hold-info h2 { margin: 6px 0 12px; font: 400 clamp(1.4rem, 3vw, 1.9rem)/1.05 var(--f-sign); padding-right: 40px; }
 .hold-info .hint { margin: 14px 0 0; font-size: .85rem; color: var(--muted); }
@@ -413,47 +367,28 @@ button.glass { cursor: pointer; }
 .close { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; }
 .close svg { width: 20px; height: 20px; }
 
-/* Ezra, the clerk behind the register: the way in to everything the factory does */
+/* Ezra, the clerk behind the register */
 .ezra {
   position: fixed; right: var(--ezra-right); bottom: 0; z-index: 14; width: var(--ezra-w);
   padding: 0; border: 0; background: none; color: var(--plate); cursor: pointer;
 }
 .ezra { display: grid; }
 .ezra img { grid-area: 1 / 1; display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 24px rgb(0 0 0 / .45)); }
-.ezra .f-wave, .ezra .f-busy { visibility: hidden; }
-.ezra[data-state="busy"] .f-busy { visibility: visible; }
-.ezra[data-state="busy"] .f-idle, .ezra[data-state="waiting"] .f-idle { visibility: hidden; }
-.ezra[data-state="waiting"] .f-wave { visibility: visible; }
-.ezra:not([data-state="busy"]):is(:hover, :focus-visible) .f-wave { visibility: visible; animation: none; }
-.ezra:not([data-state="busy"]):is(:hover, :focus-visible) .f-idle { visibility: hidden; animation: none; }
+.ezra .f-wave { visibility: hidden; }
+.ezra:is(:hover, :focus-visible) .f-wave { visibility: visible; }
+.ezra:is(:hover, :focus-visible) .f-idle { visibility: hidden; }
 .ezra:focus-visible { outline: 3px solid var(--fix); outline-offset: 4px; border-radius: 8px; }
-.ezra-alert { /* the "!" over his head when something is waiting on Brandon */
-  position: absolute; z-index: 1; left: calc(47% - 18px); top: -40px; width: 36px; height: 36px; display: grid; place-items: center;
-  border-radius: 50%; border: 3px solid var(--ink); background: var(--fix); color: var(--ink);
-  font: 400 1.25rem/1 var(--f-sign); box-shadow: 0 4px 0 rgb(0 0 0 / .35);
-}
-.ezra[data-state="idle"] .ezra-alert { display: none; }
-.ezra[data-state="busy"] .ezra-alert { background: var(--plate); font-size: 1rem; }
-@media (prefers-reduced-motion: no-preference) {
-  /* hand up, hand down: a sprite wave, with the two frames always opposite each other */
-  .ezra[data-state="waiting"] .f-wave { animation: wave 1.6s steps(1) infinite; }
-  .ezra[data-state="waiting"] .f-idle { animation: rest 1.6s steps(1) infinite; }
-  .ezra[data-state="waiting"] .ezra-alert, .ezra[data-state="busy"] .ezra-alert { animation: bob 1.2s ease-in-out infinite; }
-}
-@keyframes wave { 0% { visibility: visible; } 60% { visibility: hidden; } }
 /* While his bubble is open he's talking with you: mouth open, hands on the counter. He waves hi as it opens, and when you point at him. */
 .ezra .f-talk { visibility: hidden; }
-.ezra.talking .f-idle, .ezra.talking .f-wave, .ezra.talking .f-busy { visibility: hidden; animation: none; }
+.ezra.talking .f-idle, .ezra.talking .f-wave { visibility: hidden; }
 .ezra.talking .f-talk { visibility: visible; }
 .ezra.talking.hi .f-wave, .ezra.talking:is(:hover, :focus-visible) .f-wave { visibility: visible; }
 .ezra.talking.hi .f-talk, .ezra.talking:is(:hover, :focus-visible) .f-talk { visibility: hidden; }
-@keyframes rest { 0% { visibility: hidden; } 60% { visibility: visible; } }
-@keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
 
-/* His speech bubble: questions, conversations and the back room */
+/* His speech bubble */
 .counter {
   position: fixed; right: var(--ezra-right); bottom: var(--bubble-bottom); z-index: 15;
-  width: min(440px, calc(100vw - 24px)); height: min(620px, calc(100dvh - var(--bubble-bottom) - 40px));
+  width: min(440px, calc(100vw - 24px));
   display: flex; flex-direction: column; background: var(--plate); border: 4px solid var(--ink); border-radius: 18px;
   box-shadow: inset 0 0 0 3px #fffaf0, 8px 8px 0 rgb(0 0 0 / .38); transform-origin: calc(100% - var(--tail)) 100%;
 }
@@ -461,89 +396,15 @@ button.glass { cursor: pointer; }
   content: ""; position: absolute; right: var(--tail); bottom: -13px; width: 22px; height: 22px; transform: rotate(45deg);
   background: var(--plate); border: solid var(--ink); border-width: 0 4px 4px 0;
 }
-.counter.guest { height: auto; }
-.counter.guest .counter-head { justify-content: flex-end; padding-bottom: 0; border-bottom: 0; }
-.counter-head { position: relative; display: flex; align-items: center; gap: 8px; padding: 26px 14px 12px; border-bottom: 3px solid var(--ink); }
+.counter-head { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 26px 14px 0; }
 .counter-head h2 { /* his name plate, like a dialogue box */
   position: absolute; top: -20px; left: 14px; margin: 0; padding: 7px 12px 6px; border: 3px solid var(--ink); border-radius: 6px;
   background: var(--game); color: #fff; font: 400 1rem/1 var(--f-sign); letter-spacing: .06em;
 }
 .counter-head .close { position: static; flex: none; }
 .ezra-line { margin: 0; font: 600 1.06rem/1.45 var(--f-body); }
-.tabs { display: flex; gap: 6px; flex: 1; }
-.tabs[hidden] { display: none; }
-@media (max-width: 520px) { .tabs button { font-size: .68rem; padding-inline: 4px; } }
-.tabs button { flex: 1; font: 400 .8rem/1 var(--f-sign); padding: 9px 8px 8px; border: 3px solid var(--ink); border-radius: 6px; background: var(--plate); color: var(--ink); cursor: pointer; }
-.tabs button[aria-selected="true"] { background: var(--ink); color: var(--plate); }
-.tabs button:focus-visible { outline: 3px solid var(--fix); outline-offset: 2px; }
 .counter-body { flex: 1; min-height: 0; overflow: auto; padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }
-.counter-body[hidden] { display: none; }
-.note { margin: 0; color: var(--muted); font-size: .92rem; }
-.question, .row-card { background: #fffdf6; border: 3px solid var(--ink); border-radius: 8px; padding: 12px 14px; display: grid; gap: 10px; box-shadow: 4px 4px 0 rgb(28 25 21 / .22); }
-.question .q-project { font: 400 .72rem/1 var(--f-sign); color: var(--muted); margin: 0; }
-.question h3 { margin: 0; font: 800 1.35rem/1.1 var(--f-cond); }
-.md { font-size: .95rem; line-height: 1.5; overflow-wrap: anywhere; }
-.md p, .md ul, .md ol, .md pre { margin: 0 0 8px; }
-.md ul, .md ol { padding-left: 1.2em; }
-.md code { font: .85em ui-monospace, Menlo, monospace; background: rgb(28 25 21 / .08); padding: 1px 4px; border-radius: 3px; }
-.md pre { background: var(--ink); color: var(--plate); padding: 10px; border-radius: 4px; overflow-x: auto; }
-.md pre code { background: none; padding: 0; color: inherit; }
-.md a { color: var(--site); }
-textarea {
-  width: 100%; min-height: 64px; resize: vertical; padding: 9px 10px; font: 1rem/1.4 var(--f-body); color: var(--ink);
-  background: #fffdf6; border: 3px solid var(--ink); border-radius: 7px; box-shadow: inset 3px 3px 0 rgb(28 25 21 / .08);
-}
-textarea:focus-visible, input:focus-visible { outline: 3px solid var(--fix); outline-offset: 1px; }
-input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); border: 2px solid var(--ink); border-radius: 5px; background: #fffdf6; color: var(--ink); }
 .btn.small { padding: 8px 11px 7px; font-size: .88rem; }
-.btn.go { background: var(--pass); color: #fff; border-color: var(--ink); }
-.btn.warn { background: var(--fix); }
-.btn:disabled { opacity: .5; cursor: progress; }
-.row-card { position: relative; cursor: pointer; text-align: left; font: inherit; color: inherit; grid-template-columns: 1fr auto; align-items: center; padding-left: 30px; }
-.row-card::before { /* the menu cursor */ content: "▶"; position: absolute; left: 10px; top: 50%; translate: 0 -50%; font-size: .8rem; opacity: 0; }
-.row-card:hover::before, .row-card:focus-visible::before { opacity: 1; }
-@media (prefers-reduced-motion: no-preference) { .row-card:hover::before, .row-card:focus-visible::before { animation: blink .8s steps(1) infinite; } }
-.row-card strong { font: 800 1.1rem/1.1 var(--f-cond); }
-.row-card .note { grid-column: 1; }
-.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); grid-row: 1 / span 2; grid-column: 2; }
-.dot.working { background: var(--pass); }
-.thread-head { display: flex; align-items: center; gap: 8px; }
-.thread-head h3 { margin: 0; font: 800 1.25rem/1.1 var(--f-cond); }
-.messages { display: flex; flex-direction: column; gap: 8px; }
-.msg { max-width: 92%; padding: 9px 12px; border-radius: 8px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 rgb(28 25 21 / .18); }
-.msg.user { align-self: flex-end; background: var(--ink); color: var(--plate); white-space: pre-wrap; }
-.msg.agent { /* Ezra: his face, then a speech bubble */
-  align-self: flex-start; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; align-items: start;
-  padding: 0; border: 0; box-shadow: none; background: none; max-width: 96%;
-}
-.msg.agent .say { padding: 9px 12px; background: #fffdf6; border: 2px solid var(--ink); border-radius: 4px 12px 12px 12px; box-shadow: 3px 3px 0 rgb(28 25 21 / .18); }
-.msg.agent .say > :last-child { margin-bottom: 0; }
-.ezra-face { /* Ezra's head, cropped from his idle frame */
-  width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); background: #e9dcc0 url(art/ezra-1.webp) no-repeat;
-  background-size: 330%; background-position: 46% 7%;
-}
-.msg.agent .say :is(.done, .tail) { display: contents; }
-.msg.agent .say .tail > p { white-space: pre-wrap; }
-/* An agent's steps fold into one line: the latest step and how many, opened for the full list */
-.msg.tool { align-self: flex-start; border: 0; box-shadow: none; padding: 0 4px 0 46px; color: var(--muted); font: italic 500 .86rem/1.3 var(--f-body); }
-.msg.tool summary { cursor: pointer; list-style: none; overflow-wrap: anywhere; }
-.msg.tool summary::-webkit-details-marker { display: none; }
-.msg.tool summary::before { content: "▸ "; font-style: normal; }
-.msg.tool[open] summary::before { content: "▾ "; }
-.msg.tool ol { margin: 6px 0 0; padding-left: 1.4em; display: grid; gap: 3px; overflow-wrap: anywhere; }
-.msg.error { align-self: flex-start; border-color: var(--fail, #b3261e); color: #8f1d17; background: #fff3f1; }
-.thinking { margin: 0; padding-left: 46px; color: var(--muted); font: italic 500 .9rem/1.2 var(--f-body); }
-.dots span { display: inline-block; }
-@media (prefers-reduced-motion: no-preference) {
-  .dots span { animation: blink 1.2s steps(1) infinite; }
-  .dots span:nth-child(2) { animation-delay: .2s; } .dots span:nth-child(3) { animation-delay: .4s; }
-}
-.composer { display: grid; gap: 8px; position: sticky; bottom: -18px; margin-top: auto; padding: 10px 0 0; background: var(--plate); }
-.composer textarea { field-sizing: content; max-height: 30dvh; }
-.composer-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
-.composer-actions .thinking { margin: 0 auto 0 0; padding: 0; }
-.composer-actions .idle { visibility: hidden; } /* keeps its place, so nothing shifts when an agent starts or stops */
-.jump { position: absolute; top: -50px; left: 0; right: 0; margin-inline: auto; width: max-content; }
 .toast { /* Ezra's quick lines, in a small bubble over his head */
   position: fixed; right: var(--ezra-right); bottom: var(--bubble-bottom); z-index: 30;
   min-width: 210px; max-width: min(320px, calc(100vw - 24px)); padding: 12px 14px; border: 3px solid var(--ink); border-radius: 14px;
@@ -556,15 +417,6 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
 .toast[hidden] { display: none; }
 .counter:not([hidden]) ~ .toast { bottom: auto; top: 12px; } /* never over the conversation you're in */
 .counter:not([hidden]) ~ .toast::after { display: none; }
-.toast.action { cursor: pointer; }
-.status { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-.status li { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; background: #fffdf6; border: 3px solid var(--ink); border-radius: 8px; padding: 10px 12px; box-shadow: 4px 4px 0 rgb(28 25 21 / .22); }
-.status li .dot { grid-row: 1 / span 2; grid-column: 1; }
-.status li .dot.warn { background: var(--fix); }
-.status strong { font: 800 1.05rem/1.1 var(--f-cond); }
-.status .note { grid-column: 2; }
-.status .btn { grid-column: 2; justify-self: start; margin-top: 6px; }
-.counter-body h3 { margin: 6px 0 0; font: 400 .85rem/1 var(--f-sign); color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .flip, .knob, .btn { transition: none; } }
 </style>
 </head>
@@ -574,16 +426,12 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
     <div class="sign-main">
       <h1 id="store-name">ForgynGames</h1>
       <div class="sign-text">
-        <p class="tagline" id="tagline">Games · Web apps &amp; sites</p>
+        <p class="tagline">Games and web apps · one file each, play anywhere</p>
         <p class="summary" id="summary">Stocking the shelves…</p>
-        <p class="mode" id="mode" hidden>DEV VIEW · only you see this</p>
       </div>
     </div>
     <div class="sign-side">
-      <a class="btn small" id="to-store" href="https://forgyngames.github.io" target="_blank" rel="noopener" hidden>Open the store ↗</a>
-      <a class="waiting" id="waiting" href="https://github.com/warfare-hub/factory/issues?q=is%3Aopen+label%3Aneeds-you" hidden></a>
-      <button type="button" class="lamp" id="lamp" hidden>Back room</button>
-      <p class="open-sign" id="open-sign" hidden><small>Come in, we're</small>Open</p>
+      <p class="open-sign"><small>Come in, we're</small>Open</p>
       <a class="itch" id="itch" href="https://forgyngames.itch.io/" target="_blank" rel="noopener">Also on itch.io</a>
     </div>
   </div>
@@ -594,7 +442,7 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
     <div class="tv-slot">
     <div class="set on" id="demo-set">
       <button type="button" class="glass" id="demo-screen"><span class="pic"></span><canvas class="snow" width="320" height="254" aria-hidden="true"></canvas><span class="beam"></span><span class="osd" aria-hidden="true"></span></button>
-      <img src="art/tv.webp" alt="" width="880" height="684">
+      <img src="art/tv.webp" alt="" width="880" height="684" fetchpriority="high">
       <button type="button" class="knob ch" title="Channel: turn it, or click its right or left side" aria-label="Channel"></button>
       <button type="button" class="knob vol" title="Volume: turn it, or click its right or left side" aria-label="Volume" role="slider" aria-valuemin="0" aria-valuemax="10"></button>
       <button type="button" class="power" title="Power" aria-label="Power"></button>
@@ -640,33 +488,23 @@ input[type="text"] { width: 100%; padding: 9px 10px; font: 1rem var(--f-body); b
       <p class="kind" id="hold-kind"></p>
       <h2 id="hold-title"></h2>
       <ul class="specs" id="hold-specs"></ul>
-      <div id="hold-line"></div>
       <div class="actions" id="hold-actions"></div>
       <p class="hint">Drag the box to turn it over, or press ← →.</p>
     </div>
   </div>
 </div>
 
-<button type="button" class="ezra" id="ezra" data-state="idle" aria-label="Ezra, the clerk">
-  <span class="ezra-alert" id="ezra-alert" aria-hidden="true"></span>
+<button type="button" class="ezra" id="ezra" aria-label="Ezra, the clerk">
   <img class="f-idle" src="art/ezra-1.webp" alt="" width="460" height="452">
-  <img class="f-wave" src="art/ezra-2.webp" alt="" width="460" height="452">
-  <img class="f-busy" src="art/ezra-3.webp" alt="" width="460" height="452">
-  <img class="f-talk" src="art/ezra-4.webp" alt="" width="460" height="452">
+  <img class="f-wave" src="art/ezra-1.webp" data-src="art/ezra-2.webp" alt="" width="460" height="452">
+  <img class="f-talk" src="art/ezra-1.webp" data-src="art/ezra-4.webp" alt="" width="460" height="452">
 </button>
 <aside class="counter" id="counter" hidden aria-labelledby="counter-title">
   <div class="counter-head">
     <h2 id="counter-title">Ezra</h2>
-    <div class="tabs" role="tablist">
-      <button type="button" role="tab" aria-selected="true" aria-controls="tab-questions" id="tab-q">Your call</button>
-      <button type="button" role="tab" aria-selected="false" aria-controls="tab-talk" id="tab-t">Talk</button>
-      <button type="button" role="tab" aria-selected="false" aria-controls="tab-room" id="tab-r">Back room</button>
-    </div>
     <button type="button" class="icon close" id="counter-close" aria-label="Close Ezra's bubble"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
   </div>
-  <div class="counter-body" id="tab-questions" role="tabpanel" aria-labelledby="tab-q"></div>
-  <div class="counter-body" id="tab-talk" role="tabpanel" aria-labelledby="tab-t" hidden></div>
-  <div class="counter-body" id="tab-room" role="tabpanel" aria-labelledby="tab-r" hidden></div>
+  <div class="counter-body" id="counter-body"></div>
 </aside>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -704,45 +542,40 @@ const short = (iso) => {
   return m < 1 ? 'now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
 };
 
-let data = { mode: 'shelf', items: [] };
-let lineup = new Map(); // dev view only: where each product is on the production line
-let inbox = [];
+let data = { items: [] };
+let lastShelf = '';
+// The page's own pictures come first: the counter TV's trailer and Ezra's wave and talk wait for the page to load, four seconds at most.
+const settled = new Promise((done) => { addEventListener('load', done, { once: true }); setTimeout(done, 4000); });
 let seen = null;
 let returnFocus = null;
-const store = () => data.mode === 'store';
-const stamp = (item) => Date.parse(item.checkedAt ?? item.shippedAt);
-const isNew = (item) => Date.now() - (item.addedAt ? Date.parse(item.addedAt) : stamp(item)) < (store() ? 7 : 1) * 86400e3;
-const hrefOf = (item) => item.href ?? (store() ? `${item.name}/` : `${item.name}.html`);
-const slug = (text) => text.trim().toLowerCase().replace(/\s+/g, '-');
-const calls = (item) => inbox.filter((issue) => issue.title.includes(':') && slug(issue.title.split(':')[0]) === item.name);
-const art = (item) => `${item.cover ? 'covers' : 'thumbs'}/${item.name}.png?${stamp(item)}`;
-const download = (item) => item.download ?? (store() ? `${item.name}/index.html` : `${item.name}.html`); // a folder build comes as a zip
+const stamp = (item) => Date.parse(item.shippedAt);
+const isNew = (item) => Date.now() - (item.addedAt ? Date.parse(item.addedAt) : stamp(item)) < 7 * 86400e3;
+const hrefOf = (item) => item.href ?? `${item.name}/`;
+const art = (item) => `${item.cover ? 'covers' : 'thumbs'}/${item.name}.webp?${stamp(item)}`; // npm run store makes the WebP from the PNG
+const download = (item) => item.download ?? `${item.name}/index.html`; // a folder build comes as a zip
 const saveAs = (item) => item.download ?? `${item.name}.html`;
 
 // The front and the back of a box, printed the same way on the shelf and in your hands.
-const fallback = (e) => { e.target.onerror = null; e.target.src = 'art/coming-soon.webp'; };
+// A missing picture tries its PNG (a store published by an older factory.js has only those), then the coming-soon box.
+const fallback = (e) => {
+  const img = e.target;
+  if (img.src.includes('.webp?')) img.src = img.src.replace('.webp?', '.png?');
+  else { img.onerror = null; img.src = 'art/coming-soon.webp'; }
+};
 function frontFace(item) {
-  const face = el('span', { className: 'face front' },
-    item.client && !store() ? el('span', { className: 'band client' }, `Client · ${item.client}`) : el('span', { className: 'band' }, LABEL[item.kind] ?? item.kind), // client work: private, never in the store
+  const face = el('span', { className: 'face front' }, el('span', { className: 'band' }, LABEL[item.kind] ?? item.kind),
     el('span', { className: 'art' }, el('img', { src: art(item), alt: '', loading: 'lazy', onerror: fallback }),
       ...(item.cover ? [] : [el('span', { className: 'title' }, item.title)])));
-  if (!store()) {
-    const waiting = calls(item).length;
-    const ok = item.problems === 0;
-    const live = Boolean(item.live?.pages);
-    face.append(el('span', { className: `sticker ${waiting ? 'call' : !ok ? 'fix' : live ? 'store' : 'pass'}` },
-      waiting ? 'Your call' : !ok ? `${item.problems} to fix` : live ? 'In store' : 'Checked'));
-  }
   if (isNew(item)) face.append(el('span', { className: 'starburst', innerHTML: STAR }, el('span', {}, 'New')));
   return face;
 }
 function backFace(item) {
   return el('span', { className: 'face back' },
     el('span', { className: 'band' }, item.title),
-    el('img', { className: 'shot', src: `thumbs/${item.name}.png?${stamp(item)}`, alt: '', loading: 'lazy', onerror: fallback }),
+    el('img', { className: 'shot', src: `thumbs/${item.name}.webp?${stamp(item)}`, alt: '', loading: 'lazy', onerror: fallback }),
     el('span', { className: 'blurb' }, item.summary || 'No pitch written yet.'),
     el('span', { className: 'fine' },
-      el('span', {}, `${item.kb} KB · one file`, el('br'), store() ? `Shipped ${short(item.shippedAt)}` : `Checked ${short(item.checkedAt)}`),
+      el('span', {}, `${item.kb} KB · one file`, el('br'), `Shipped ${short(item.shippedAt)}`),
       el('span', { className: 'barcode' })));
 }
 
@@ -763,10 +596,7 @@ function box(item) {
   caseButton.addEventListener('pointerleave', () => { clearTimeout(turnTimer); caseButton.classList.remove('turned'); stopReading(); });
   const save = el('a', { className: 'icon', href: download(item), download: saveAs(item), title: 'Download', innerHTML: icon('download') });
   save.setAttribute('aria-label', `Download ${item.title}`);
-  const p = lineup.get(item.name);
-  const tag = el('p', { className: 'tag' }, el('strong', {}, `${item.kb} KB`),
-    p ? el('span', { className: `stage${p.waiting ? ' wait' : ''}`, title: `On the production line: ${p.stage}` }, p.stage.toUpperCase())
-      : el('time', { dateTime: item.shippedAt ?? item.checkedAt }, short(item.shippedAt ?? item.checkedAt)), save);
+  const tag = el('p', { className: 'tag' }, el('strong', {}, `${item.kb} KB`), el('time', { dateTime: item.shippedAt }, short(item.shippedAt)), save);
   const li = el('li', { className: 'item' }, caseButton, tag);
   li.dataset.name = item.name;
   return li;
@@ -828,8 +658,6 @@ function render(arrive) {
     fresh.forEach((li) => {
       const burst = li.querySelector('.starburst');
       if (burst) animate(burst, { scale: [0, 1.2, 1], rotate: [-40, 6, -12] }, { duration: 0.6, delay: 0.45 });
-      const call = li.querySelector('.sticker.call');
-      if (call) animate(call, { rotate: [12, -10, 16, -4, 12] }, { duration: 0.8, delay: 0.6 });
     });
   }
   if (!calm && M.hover) main.querySelectorAll('.case').forEach((c) => {
@@ -879,24 +707,8 @@ new ResizeObserver(([e]) => {
 
 function updateSign(first) {
   const n = data.items.length;
-  $('#store-name').textContent = store() ? 'ForgynGames' : 'Shelf';
-  $('#tagline').textContent = store() ? 'Games and web apps · one file each, play anywhere' : 'Games · Web apps & sites, built on Ezra Mini';
-  document.title = `${!store() && inbox.length ? `(${inbox.length}) ` : ''}${store() ? 'ForgynGames' : 'Shelf · Ezra Mini'}`;
-  $('#mode').hidden = store();
-  document.querySelector('meta[name=apple-mobile-web-app-title]').content = store() ? 'ForgynGames' : 'Shelf'; // the name under the home-screen icon
-  $('#to-store').hidden = store();
-  $('#open-sign').hidden = !store();
   if (window.top !== window) $('#itch').hidden = true; // already on itch.io, inside its embed
-  const toFix = data.items.filter((i) => i.problems > 0).length;
-  $('#summary').textContent = !n ? (store() ? 'Opening soon' : 'Open 24/7, just for you')
-    : store() ? `${n} title${n > 1 ? 's' : ''} on the shelf`
-    : `${n} in stock · ${toFix ? `${toFix} need fixing` : 'all checked'} · last check ${when(data.items[0].checkedAt)}`;
-  const waiting = $('#waiting');
-  const before = Number(waiting.dataset.count ?? 0);
-  waiting.hidden = store() || !inbox.length;
-  waiting.textContent = `${inbox.length} waiting for you`;
-  waiting.dataset.count = inbox.length;
-  if (inbox.length > before && !first) animate(waiting, { scale: [1, 1.15, 1], rotate: [0, -3, 3, 0] }, { duration: 0.6 });
+  $('#summary').textContent = n ? `${n} title${n > 1 ? 's' : ''} on the shelf` : 'Opening soon';
   if (first) animate($('#sign'), { opacity: [0, 1, 0.35, 1, 0.6, 1] }, { duration: 0.9, times: [0, 0.2, 0.3, 0.5, 0.6, 1] });
 }
 
@@ -1093,6 +905,9 @@ const demoSet = $('#demo-set');
 let channel = 0;
 let demoTimer;
 let demoImg, demoVideo;
+let loaded = false; // until then the TV shows the title's still
+const broken = new Set(); // titles whose trailer won't play here: the TV shows their still
+settled.then(() => { loaded = true; if (lastShelf) tune(channel, true); });
 // The TVs are for games. Sites and apps open in their own tab, where they get the whole window.
 const onTV = (item) => item.kind === 'game';
 const tvItems = () => data.items.filter(onTV);
@@ -1113,9 +928,8 @@ function tune(n, quiet) {
   if (!items.length) {
     setPower(demoSet, false);
     $('#demo-ch').textContent = 'CH -- · Off the air';
-    $('#demo-title').textContent = store() ? 'New titles on the way' : 'Shelves get stocked soon';
-    $('#demo-pitch').textContent = store() ? 'Games and web apps land here as they ship, each one a single file you can play right here.'
-      : 'Every build lands on the shelf after its check. Tell Ezra an idea to get one going.';
+    $('#demo-title').textContent = 'New titles on the way';
+    $('#demo-pitch').textContent = 'Games and web apps land here as they ship, each one a single file you can play right here.';
     return;
   }
   channel = (n + items.length) % items.length;
@@ -1128,21 +942,30 @@ function tune(n, quiet) {
   if (!demoVideo) {
     pic.append(demoVideo = el('video', { muted: true, playsInline: true, preload: 'auto' }));
     demoVideo.addEventListener('ended', () => tune(channel + 1)); // a trailer plays to its end, then the next title
+    demoVideo.addEventListener('error', () => {
+      if (!demoVideo.getAttribute('src')) return;
+      if (demoVideo.src.includes('.tv.mp4') && demoVideo.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) { // no light copy (an older factory.js published it): the full trailer
+        demoVideo.src = demoVideo.src.replace('.tv.mp4', '.mp4');
+        demoVideo.play().catch(() => {});
+      } else { broken.add(demoItem()?.name); tune(channel, true); }
+    });
   }
-  const still = `thumbs/${item.name}.png?${stamp(item)}`;
-  const trailer = item.trailer && !calm; // players who prefer less motion get the still
+  const still = `thumbs/${item.name}.webp?${stamp(item)}`;
+  const trailer = item.trailer && !calm && loaded && !broken.has(item.name); // players who prefer less motion get the still
   demoImg.hidden = Boolean(trailer);
   demoVideo.hidden = !trailer;
   if (trailer) {
     demoVideo.muted = true;
     demoVideo.loop = items.length < 2;
     demoVideo.poster = still;
-    demoVideo.src = `${item.trailer}?${stamp(item)}`;
+    demoVideo.src = `${item.trailer.replace(/\.mp4$/, '.tv.mp4')}?${stamp(item)}`; // the small TV's light copy (npm run store)
     demoVideo.play().catch(() => {});
   } else {
     demoVideo.pause();
     demoVideo.removeAttribute('src');
-    demoImg.onerror = () => { demoImg.onerror = null; demoImg.src = `covers/${item.name}.png?${stamp(item)}`; }; // no screenshot: the box art
+    // no WebP: its PNG; no screenshot at all: the box art
+    const stills = [still, `thumbs/${item.name}.png?${stamp(item)}`, `covers/${item.name}.webp?${stamp(item)}`, `covers/${item.name}.png?${stamp(item)}`];
+    demoImg.onerror = () => { const next = stills[stills.indexOf(demoImg.getAttribute('src')) + 1]; if (next) demoImg.src = next; else demoImg.onerror = null; };
     demoImg.src = still;
   }
   $('#demo-ch').textContent = `CH ${chName(channel)} · Now showing`;
@@ -1266,26 +1089,14 @@ function pickUp(item, from, back = false) {
   held.replaceChildren(frontFace(item), backFace(item));
   $('#hold-kind').textContent = `${(LABEL[item.kind] ?? item.kind).toUpperCase()} · ${item.kb} KB · ${item.download ? 'A FOLDER' : 'ONE FILE'}`;
   $('#hold-title').textContent = item.title;
-  const specs = [store() ? `Shipped ${when(item.shippedAt)}` : `Checked ${when(item.checkedAt)}`,
-    ...(!store() && item.problems ? [`${item.problems} to fix`] : []),
-    ...Object.entries(item.scores ?? {}).map(([k, v]) => `${k} ${v}`)];
-  if (item.client && !store()) specs.unshift(`Client work for ${item.client}: private, never in the store`);
+  const specs = [`Shipped ${when(item.shippedAt)}`, ...Object.entries(item.scores ?? {}).map(([k, v]) => `${k} ${v}`)];
   $('#hold-specs').replaceChildren(...specs.map((t) => el('li', {}, t)));
-  const p = !store() && hub.allowed ? lineup.get(item.name) : null;
-  $('#hold-line').replaceChildren(...(p ? [lineSection(p)] : []));
   const button = (label, onClick, className = 'btn') => { const b = el('button', { type: 'button', className }, label); b.addEventListener('click', onClick); return b; };
   const linkBtn = (label, href) => el('a', { className: 'btn', href, target: '_blank', rel: 'noopener' }, label);
   const playBtn = playButton(item, letGo, 'Play it on the TV', 'btn primary');
   const actions = [playBtn, button('Turn it over', () => turnTo(angle + 180)),
     el('a', { className: 'btn', href: download(item), download: saveAs(item) }, 'Take it home')];
   if (item.trailer) actions.splice(1, 0, button('Watch the trailer', () => { letGo(); openTV(item, from, true); }));
-  if (p && !item.client) actions.splice(1, 0, publishButton(item, p));
-  if (hub.allowed && !store()) actions.push(button('Ask Ezra about it', () => {
-    letGo();
-    openCounter('talk');
-    openThread(hub.sessions.find((s) => s.project === item.name) ?? { title: item.title, project: item.name });
-  }));
-  if (item.live?.pages && !store()) actions.push(linkBtn('Live on ForgynGames', item.live.pages));
   if (item.live?.itch) actions.push(linkBtn('On itch.io', item.live.itch));
   actions.push(button('Copy link', async () => {
     const url = `${location.origin}${location.pathname}#box/${item.name}`;
@@ -1294,8 +1105,6 @@ function pickUp(item, from, back = false) {
       else { await navigator.clipboard.writeText(url); toast('Link copied.'); }
     } catch { /* the share sheet was closed */ }
   }));
-  if (p && item.live?.pages) actions.push(askTwiceButton(item, 'Take it out of the store', 'unship', `Taking ${item.title} out of the store. It stays on the shelf.`));
-  if (p && !item.live?.pages) actions.push(trashButton(item));
   $('#hold-actions').replaceChildren(...actions);
   hold.hidden = false;
   link('box', item);
@@ -1311,97 +1120,7 @@ function pickUp(item, from, back = false) {
   animate(hold.querySelector('.hold-info'), { opacity: [0, 1], x: [30, 0] }, { duration: 0.3, delay: 0.12 });
   playBtn.focus();
 }
-// Dev view: the production line track, the questions so far with Brandon's answers, and where the code and the store stand.
-const ANSWERED = { yes: 'Kept going', change: 'Changed it', no: 'Shelved' };
-function lineSection(p) {
-  const track = el('ol', { className: 'track' }, ...p.line.map((name, i) => {
-    const li = el('li', { className: i < p.step ? 'done' : i === p.step ? `now${p.waiting ? ' wait' : ''}` : '', title: name });
-    li.setAttribute('aria-label', `${name}${i < p.step ? ', done' : i === p.step ? ', here now' : ''}`);
-    return li;
-  }));
-  const history = el('ul', { className: 'history' }, ...p.asked.map((q) => el('li', {},
-    el('span', {}, `#${q.number} ${q.question}`), el('span', {}, q.open ? 'Waiting on you' : `${ANSWERED[q.answer]} · ${short(q.answeredAt)}`))));
-  const facts = [p.ahead ? `${p.ahead} change${p.ahead > 1 ? 's' : ''} not on main yet` : 'All on main', p.inStore ? 'In the store' : 'Not in the store yet'];
-  return el('section', { className: 'line' }, el('h3', {}, 'Production line'), track,
-    el('p', { className: 'where' }, `Stage ${p.step + 1} of ${p.line.length}: ${p.stage}${p.waiting ? ' · your call' : p.shelved ? ' · shelved' : ''}`),
-    ...(p.asked.length ? [history] : []), el('p', { className: 'facts' }, facts.join(' · ')), autopilotRow(p));
-}
-// Autopilot: Ezra decides Fun? and Look? with evidence and shows you each one; Ship? is always yours.
-function autopilotRow(p) {
-  const b = el('button', { type: 'button', className: 'linkish' }, p.autopilot ? 'Turn it off' : 'Turn it on');
-  b.addEventListener('click', async () => {
-    b.disabled = true;
-    try {
-      const s = await api(`/api/projects/${p.name}/autopilot`, { on: !p.autopilot });
-      letGo();
-      toast(p.autopilot ? 'Autopilot off: I\'ll ask you at every question.' : 'Autopilot on: I\'ll take it to Ship? and show you every step.');
-      openCounter('talk');
-      openThread(s);
-    } catch (e) {
-      toast(e.message);
-      b.disabled = false;
-    }
-  });
-  return el('p', { className: 'autopilot' }, el('strong', {}, `Autopilot ${p.autopilot ? 'on' : 'off'}: `),
-    p.autopilot ? 'I decide Fun? and Look? and show you each one. Ship? is yours. ' : 'every question waits for you. ', b);
-}
-
-// Publishing asks twice, and says so when something is still open or broken.
-function publishButton(item, p) {
-  const label = p.inStore ? 'Update the store copy' : 'Put it in the store';
-  const b = el('button', { type: 'button', className: 'btn go' }, label);
-  let armed = null;
-  b.addEventListener('click', async () => {
-    if (!armed) {
-      b.textContent = p.waiting ? 'A question is still open. Ship anyway?' : item.problems ? `${item.problems} to fix. Ship anyway?` : 'Sure? Click again to ship it';
-      armed = setTimeout(() => { armed = null; b.textContent = label; }, 5000);
-      return;
-    }
-    clearTimeout(armed);
-    b.disabled = true;
-    try {
-      const s = await api(`/api/projects/${item.name}/publish`, {});
-      letGo();
-      toast('On it. The progress is in my bubble.');
-      openCounter('talk');
-      openThread(s);
-    } catch (e) {
-      toast(e.message);
-      b.disabled = false;
-    }
-  });
-  return b;
-}
-
-// Trashing, and taking a title out of the store, ask twice too; then Ezra does it in his bubble.
-const trashButton = (item) => askTwiceButton(item, 'Trash it', 'trash', `Taking ${item.title} off the shelf. It can always come back.`);
-function askTwiceButton(item, label, action, done) {
-  const b = el('button', { type: 'button', className: 'btn trash' }, label);
-  let armed = null;
-  b.addEventListener('click', async () => {
-    if (!armed) {
-      b.textContent = `Sure? Click again to ${label.toLowerCase()}`;
-      b.classList.add('armed');
-      armed = setTimeout(() => { armed = null; b.textContent = label; b.classList.remove('armed'); }, 5000);
-      return;
-    }
-    clearTimeout(armed);
-    b.disabled = true;
-    try {
-      const s = await api(`/api/projects/${item.name}/${action}`, {});
-      letGo();
-      toast(done);
-      openCounter('talk');
-      openThread(s);
-    } catch (e) {
-      toast(e.message);
-      b.disabled = false;
-    }
-  });
-  return b;
-}
-
-// Let go without flying back (to play it, or to talk about it).
+// Let go without flying back (to play it).
 function letGo() {
   hold.hidden = true;
   if (!calm) M.animate(held, { x: 0, y: 0, scale: 1, opacity: 1 }, { duration: 0 });
@@ -1521,403 +1240,23 @@ addEventListener('gamepadconnected', () => {
 });
 addEventListener('mousedown', () => document.documentElement.classList.remove('pad'));
 
-// ── The counter: answer questions and talk with the factory. Only shown when the hub says this is Brandon. ──
-let hub = { allowed: false, sessions: [], questions: [] };
-const api = async (path, payload) => {
-  const r = await fetch(path, payload ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) } : {});
-  const out = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(out.error || 'Something went wrong. Try again.');
-  return out;
-};
 let toastTimer;
-function toast(text, action) {
+function toast(text) {
   const t = $('#toast');
   t.textContent = text;
-  t.classList.toggle('action', Boolean(action));
-  t.onclick = action ? () => { t.hidden = true; action(); } : null;
   t.hidden = false;
   animate(t, { y: [20, 0], opacity: [0, 1] }, spring());
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
 }
 
-// A small, safe markdown renderer: everything is escaped first, then a few patterns become tags.
-function md(text) {
-  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  const out = [];
-  text.split(/```[^\n]*\n?/).forEach((part, i) => {
-    if (i % 2) return out.push(`<pre><code>${esc(part)}</code></pre>`);
-    for (const block of part.split(/\n{2,}/)) {
-      const lines = block.split('\n').filter((l) => l.trim());
-      if (!lines.length) continue;
-      if (lines.every((l) => /^\s*([-*]|\d+\.)\s/.test(l))) {
-        const tag = /^\s*\d+\./.test(lines[0]) ? 'ol' : 'ul';
-        out.push(`<${tag}>${lines.map((l) => `<li>${inline(l.replace(/^\s*([-*]|\d+\.)\s/, ''))}</li>`).join('')}</${tag}>`);
-      } else out.push(`<p>${lines.map(inline).join('<br>')}</p>`);
-    }
-  });
-  return out.join('');
-}
-
-const counter = $('#counter');
-let tab = 'questions';
-let thread = null;
-const drafts = new Map(); // an unsent message stays with its conversation when you switch away and back
-const unread = new Set(); // conversations that finished while you were elsewhere
-const talkTab = () => { $('#tab-t').textContent = unread.size ? `Talk (${unread.size})` : 'Talk'; };
-const projectTitle = (name) => data.items.find((i) => i.name === name)?.title ?? name;
-function openCounter(which = tab) {
-  $('.tabs').hidden = !hub.allowed;
-  counter.classList.toggle('guest', !hub.allowed);
-  if (hub.allowed) showTab(which);
-  else renderGuest();
-  if (counter.hidden) {
-    counter.hidden = false;
-    ezra.classList.add('talking', 'hi'); // a wave hello as the bubble opens, then he talks
-    clearTimeout(hiTimer);
-    hiTimer = setTimeout(() => ezra.classList.remove('hi'), 1200);
-    animate(counter, { opacity: [0, 1], scale: [0.85, 1], y: [20, 0] }, spring(380, 30));
-  }
-}
-let hiTimer;
-async function closeCounter() {
-  ezra.classList.remove('talking', 'hi');
-  await animate(counter, { opacity: [1, 0], scale: [1, 0.9], y: [0, 14] }, { duration: 0.18 });
-  counter.hidden = true;
-}
-const TABS = { questions: ['#tab-q', '#tab-questions'], talk: ['#tab-t', '#tab-talk'], room: ['#tab-r', '#tab-room'] };
-function showTab(which) {
-  tab = which;
-  for (const [name, [button, panel]] of Object.entries(TABS)) {
-    $(button).setAttribute('aria-selected', String(name === which));
-    $(panel).hidden = name !== which;
-  }
-  if (which === 'questions') renderQuestions();
-  else if (which === 'room') renderRoom();
-  else if (!thread) renderConversations();
-  lastPanel = panelKey();
-}
-$('#tab-q').addEventListener('click', () => showTab('questions'));
-$('#tab-t').addEventListener('click', () => { closeThread(); showTab('talk'); });
-$('#tab-r').addEventListener('click', () => showTab('room'));
-$('#counter-close').addEventListener('click', closeCounter);
-$('#waiting').addEventListener('click', (e) => { if (hub.allowed) { e.preventDefault(); openCounter('questions'); } });
-
-const notesDraft = new Map(); // what you've typed on a question card survives the card being redrawn
-const CHOICES = (title) => (/ship\?/i.test(title) ? ['Ship it', 'Fix first', 'Not yet']
-  : /look\?/i.test(title) ? ['Looks right', 'Change the look', 'Start the look over']
-  : /fun\?|useful\?/i.test(title) ? ['Keep going', 'Change it', 'Shelve it'] : ['Yes', 'Change it', 'No']);
-function renderQuestions() {
-  const n = hub.questions.length;
-  $('#tab-questions').replaceChildren(ezraLine(n ? `${n === 1 ? 'One thing needs' : `${n} things need`} your call.`
-    : "Nothing's waiting on you right now. I'll wave when something is."), ...hub.questions.map(questionCard));
-}
-function questionCard(q) {
-  const item = data.items.find((i) => i.name === q.project);
-  const [yes, change, no] = CHOICES(q.title);
-  const notes = el('textarea', { placeholder: `Notes for the agent (needed for "${change}")` });
-  notes.value = notesDraft.get(q.number) ?? '';
-  notes.addEventListener('input', () => notesDraft.set(q.number, notes.value));
-  notes.setAttribute('aria-label', `Notes on ${q.title}`);
-  const card = el('article', { className: 'question' });
-  const buttons = [['yes', yes, 'go'], ['change', change, 'warn'], ['no', no, '']].map(([decision, label, tone]) => {
-    const b = el('button', { type: 'button', className: `btn small ${tone}` }, label);
-    b.addEventListener('click', async () => {
-      if (decision === 'change' && !notes.value.trim()) { notes.focus(); return toast('Say what to change first.'); }
-      card.querySelectorAll('button').forEach((x) => { x.disabled = true; });
-      try {
-        const s = await api(`/api/questions/${q.number}`, { decision, notes: notes.value });
-        await animate(card, { x: [0, 80], opacity: [1, 0] }, { duration: 0.25 });
-        hub.questions = hub.questions.filter((x) => x.number !== q.number);
-        inbox = hub.questions;
-        updateSign();
-        toast('Sent. The agent is on it.');
-        openCounter('talk');
-        openThread(s);
-      } catch (e) {
-        toast(e.message);
-        card.querySelectorAll('button').forEach((x) => { x.disabled = false; });
-      }
-    });
-    return b;
-  });
-  const links = el('div', { className: 'actions' });
-  if (item) {
-    links.append(playButton(item, null, 'Play it', 'btn small'));
-  }
-  card.append(el('p', { className: 'q-project' }, q.project ? projectTitle(q.project) : 'The factory'),
-    el('h3', {}, q.title.split(':').slice(1).join(':').trim() || q.title),
-    el('div', { className: 'md', innerHTML: md(q.body || '') }), links, notes, el('div', { className: 'actions' }, ...buttons));
-  return card;
-}
-
-const FACTORY = { title: 'Ezra', factory: true };
-const factoryThread = (autoText) => openThread(hub.sessions.find((s) => s.factory) ?? FACTORY, autoText);
-const sessionTitle = (s) => (s.factory ? 'Ezra' : s.project ? projectTitle(s.project) : s.request ? hub.requests?.find((r) => r.number === s.request)?.title ?? s.title : s.title);
-function renderConversations() {
-  const idea = el('button', { type: 'button', className: 'btn primary small' }, 'New idea');
-  idea.addEventListener('click', () => openThread({ title: 'New idea' }));
-  const factory = el('button', { type: 'button', className: 'btn small' }, 'Talk to Ezra');
-  factory.addEventListener('click', () => factoryThread());
-  const request = el('button', { type: 'button', className: 'btn small' }, 'New client request');
-  request.addEventListener('click', openRequestForm);
-  const row = (title, note, dot, open) => {
-    const r = el('button', { type: 'button', className: 'row-card' }, el('strong', {}, title), el('span', { className: `dot ${dot}` }), el('span', { className: 'note' }, note));
-    r.addEventListener('click', open);
-    return r;
-  };
-  const requests = (hub.requests ?? []).map((r) => {
-    const s = hub.sessions.find((x) => x.request === r.number);
-    return row(r.title, `Client request #${r.number} · ${short(r.createdAt)} · ${s ? 'talking it through' : 'not started'}`, s?.status ?? '',
-      () => (s ? openThread(s) : openThread({ title: r.title }, `#${r.number}`)));
-  });
-  const talks = hub.sessions.filter((s) => !s.request).map((s) =>
-    row(sessionTitle(s), `${unread.has(s.id) ? 'New reply · ' : ''}${s.status === 'working' ? 'Working now' : 'Idle'} · ${short(s.updatedAt)}`, s.status, () => openThread(s)));
-  $('#tab-talk').replaceChildren(ezraLine('What are we talking about? Start something new, or pick up where we left off.'),
-    el('div', { className: 'actions' }, idea, factory, request),
-    ...(requests.length ? [el('h3', {}, 'Client requests'), ...requests] : []),
-    el('h3', {}, 'Conversations'),
-    ...(talks.length ? talks : [el('p', { className: 'note' }, 'No conversations yet. Bring an idea and talk it through.')]));
-}
-
-// The back room: is everything the factory leans on running and logged in?
-async function renderRoom() {
-  const panel = $('#tab-room');
-  if (!panel.childElementCount) panel.append(el('p', { className: 'note' }, 'Checking the back room…'));
-  let st;
-  try { st = await api('/api/status'); } catch (e) { return panel.replaceChildren(el('p', { className: 'note' }, e.message)); }
-  if (tab !== 'room') return;
-  const fix = (label, text) => {
-    const b = el('button', { type: 'button', className: 'btn small' }, label);
-    b.addEventListener('click', () => { showTab('talk'); factoryThread(text); });
-    return b;
-  };
-  const line = (good, title, note, action) => el('li', {}, el('span', { className: `dot ${good ? 'working' : 'warn'}` }),
-    el('strong', {}, title), el('span', { className: 'note' }, note), ...(action ? [action] : []));
-  const days = st.login ? Math.floor((Date.parse(st.login) - Date.now()) / 86400e3) : null;
-  const working = hub.sessions.filter((s) => s.status === 'working').length;
-  const last = data.items[0];
-  panel.replaceChildren(ezraLine("Here's the back room: everything that keeps the store running."), el('ul', { className: 'status' },
-    line(true, 'Hub', `Running since ${when(st.hubSince)}`),
-    line(true, 'Agents', `${working} working, ${hub.sessions.length - working} idle · up to 4 at once`),
-    line(st.remote, 'Remote Control', st.remote ? 'Running, for the Claude app and claude.ai' : 'Stopped. It restarts within 5 minutes.'),
-    line(days !== null && days > 7, 'Claude login', days === null ? 'Could not read the login' : `Good for ${days} more days`,
-      days !== null && days <= 7 ? fix('Renew it', 'Renew the Claude login: run `claude auth login` in tmux, show me the link, then wait for the code I paste back.') : null),
-    line(st.itch, 'itch.io', st.itch ? 'Logged in' : 'Not logged in. Needed the first time a game ships to itch.io.',
-      st.itch ? null : fix('Log in', 'Log butler into itch.io: run `butler login` in tmux and show me the link to approve.')),
-    line(true, 'Shelf', last ? `${data.items.length} in stock · last check ${when(last.checkedAt)}` : 'Empty'),
-    ...st.branches.map(([b, n]) => line(true, b, `${n} commit${n > 1 ? 's' : ''} not on main yet`))),
-    ...(lineup.size ? [el('h3', {}, 'On the line'), ...[...lineup.values()].map((p) => {
-      const item = data.items.find((i) => i.name === p.name);
-      const r = el('button', { type: 'button', className: 'row-card' }, el('strong', {}, item?.title ?? p.name),
-        el('span', { className: `dot ${p.waiting ? 'warn' : p.inStore ? 'working' : ''}` }),
-        el('span', { className: 'note' }, `${p.stage}${p.waiting ? ' · your call' : ''}${p.inStore ? ' · in the store' : ''}`));
-      r.addEventListener('click', async () => { await closeCounter(); if (item) pickUp(item, onShelf(item)); });
-      return r;
-    })] : []));
-}
-function openRequestForm() {
-  const title = el('input', { type: 'text', placeholder: 'Who is it for, and what do they want?' });
-  title.setAttribute('aria-label', 'Request title');
-  const details = el('textarea', { placeholder: 'Paste their message, links and anything they sent.' });
-  details.setAttribute('aria-label', 'Request details');
-  const file = el('button', { type: 'button', className: 'btn primary small' }, 'File it and talk it through');
-  const back = el('button', { type: 'button', className: 'btn small' }, 'Back');
-  back.addEventListener('click', renderConversations);
-  file.addEventListener('click', async () => {
-    file.disabled = true;
-    try {
-      const { url } = await api('/api/requests', { title: title.value, text: details.value });
-      openThread({ title: title.value.trim() }, `#${url.split('/').pop()}`);
-    } catch (e) {
-      toast(e.message);
-      file.disabled = false;
-    }
-  });
-  $('#tab-talk').replaceChildren(ezraLine("Someone wants something made? Give it a title, paste what they sent, and I'll file it and talk it through with you."),
-    title, details, el('div', { className: 'actions' }, file, back));
-  title.focus();
-}
-
-function closeThread() {
-  thread?.source?.close();
-  thread = null;
-}
-async function openThread(s, autoText) {
-  closeThread();
-  showTab('talk');
-  const messages = el('div', { className: 'messages' });
-  const working = el('p', { className: 'thinking idle' }, "Ezra's on it", el('span', { className: 'dots', ariaHidden: 'true' }, el('span', {}, '.'), el('span', {}, '.'), el('span', {}, '.')));
-  const input = el('textarea', { placeholder: s.id ? 'Reply…' : s.project ? `What should change in ${projectTitle(s.project)}?`
-    : s.factory ? 'Anything about the factory itself: logins, services, how things are going.'
-    : 'Describe the idea: what it is, who it is for, how it should feel.' });
-  input.setAttribute('aria-label', 'Message');
-  const fresh = `new:${s.project ?? (s.factory ? 'ezra' : s.title)}`;
-  input.value = drafts.get(s.id ?? fresh) ?? '';
-  input.addEventListener('input', () => drafts.set(t.id ?? fresh, input.value));
-  const sendButton = el('button', { type: 'submit', className: 'btn primary small' }, 'Send');
-  const stop = el('button', { type: 'button', className: 'btn small idle' }, 'Stop');
-  const jump = el('button', { type: 'button', className: 'btn small jump', hidden: true }, '↓ New');
-  jump.addEventListener('click', () => toBottom(true));
-  const form = el('form', { className: 'composer' }, jump, input, el('div', { className: 'composer-actions' }, working, stop, sendButton));
-  const back = el('button', { type: 'button', className: 'icon', innerHTML: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>' });
-  back.setAttribute('aria-label', 'All conversations');
-  back.addEventListener('click', () => { closeThread(); renderConversations(); });
-  $('#tab-talk').replaceChildren(el('div', { className: 'thread-head' }, back, el('h3', {}, sessionTitle(s))),
-    messages, form);
-  const t = { id: s.id, project: s.project, factory: s.factory, messages, working, stop, jump, live: null, steps: null, source: null };
-  if (s.id && unread.delete(s.id)) talkTab();
-  // A new conversation starts with Ezra saying something, the way a clerk would.
-  if (!s.id && !autoText) {
-    const chip = (label, go) => { const b = el('button', { type: 'button', className: 'btn small' }, label); b.addEventListener('click', go); return b; };
-    const hello = ezraMsg();
-    const title = s.project ? projectTitle(s.project) : '';
-    const [line, chips] = s.factory ? [GREETING.owner, [chip("I've got an idea", () => openThread({ title: 'New idea' })),
-      chip('New client request', openRequestForm), chip("How's the factory?", () => showTab('room'))]]
-      : s.project ? [`${title}? Sure thing. Tell me what to change, or I can just keep going on it.`,
-        [chip('Keep going', () => say(t, `Keep going on ${title}.`).catch((err) => toast(err.message)))]]
-      : ["A new one? I'm all ears. What is it, who's it for, and how should it feel?", []];
-    messages.append(hello.node, ...(chips.length ? [el('div', { className: 'actions' }, ...chips)] : []));
-    typeOut(hello.body, line);
-  }
-  thread = t;
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    drafts.delete(t.id ?? fresh);
-    sendButton.disabled = true;
-    try { await say(t, text); } catch (err) { toast(err.message); input.value = text; }
-    sendButton.disabled = false;
-    input.focus();
-  });
-  stop.addEventListener('click', () => t.id && api(`/api/sessions/${t.id}/stop`, {}).catch((err) => toast(err.message)));
-  if (t.id) await attach(t);
-  if (autoText) await say(t, autoText).catch((err) => toast(err.message));
-  input.focus();
-}
-async function say(t, text) {
-  if (t.id) return api(`/api/sessions/${t.id}/messages`, { text });
-  const s = await api('/api/sessions', { project: t.project ?? undefined, factory: t.factory || undefined, text });
-  t.id = s.id;
-  await attach(t);
-}
-async function attach(t) {
-  const { log, status } = await api(`/api/sessions/${t.id}/log`);
-  if (thread !== t) return;
-  t.messages.replaceChildren();
-  log.forEach((e) => show(t, e, false));
-  setWorking(t, status === 'working');
-  toBottom();
-  // The stream starts where the log ends, and after a dropped connection the browser catches up on what it missed.
-  t.source = new EventSource(`/api/sessions/${t.id}/stream?after=${log.length - 1}`);
-  t.source.onmessage = (m) => { if (thread === t) show(t, JSON.parse(m.data), true); };
-}
-function setWorking(t, on) {
-  t.working.classList.toggle('idle', !on);
-  t.stop.classList.toggle('idle', !on);
-}
-// The conversation follows new words only while you're at the bottom. Scrolled up to read, you stay put and "New" shows.
-const talkBox = $('#tab-talk');
-const atBottom = () => talkBox.scrollHeight - talkBox.scrollTop - talkBox.clientHeight < 60;
-function toBottom(smooth) {
-  talkBox.scrollTo({ top: talkBox.scrollHeight, behavior: smooth && !calm ? 'smooth' : 'auto' });
-  if (thread) thread.jump.hidden = true;
-}
-function stayPut(t, change, force) {
-  const stick = force || atBottom();
-  change();
-  if (stick) toBottom();
-  else t.jump.hidden = false;
-}
-talkBox.addEventListener('scroll', () => { if (thread && atBottom()) thread.jump.hidden = true; });
-// Ezra's side of a conversation: his face and a speech bubble.
-function ezraMsg() {
-  const body = el('div', { className: 'say md' });
-  return { node: el('div', { className: 'msg agent' }, el('span', { className: 'ezra-face', ariaHidden: 'true' }), body), body };
-}
-// A reply streams in place. Each paragraph is added once it's finished and never redrawn, so you can select and copy
-// mid-reply; the one being written shows as plain text, or as a growing code block, until it ends.
-function paint(t, m, now) {
-  const draw = () => stayPut(t, () => {
-    m.raf = null;
-    if (!m.text.startsWith(m.drawn)) { m.done.replaceChildren(); m.drawn = ''; } // the reply changed under us: start over
-    const fences = (text) => text.split('```').length - 1;
-    let cut = m.final ? m.text.length : m.text.lastIndexOf('\n\n') + 1;
-    while (cut > 0 && fences(m.text.slice(0, cut)) % 2) cut = m.text.lastIndexOf('\n\n', cut - 2) + 1; // never inside a code block
-    if (!m.final && fences(m.text) && !(fences(m.text) % 2)) cut = Math.max(cut, m.text.lastIndexOf('```') + 3);
-    if (cut > m.drawn.length) {
-      m.done.insertAdjacentHTML('beforeend', md(m.text.slice(m.drawn.length, cut)));
-      m.drawn = m.text.slice(0, cut);
-    }
-    const rest = m.text.slice(m.drawn.length);
-    if (rest.includes('```')) m.tail.innerHTML = md(rest);
-    else m.tail.replaceChildren(...(rest.trim() ? [el('p', {}, rest)] : []));
-  });
-  if (now) draw();
-  else m.raf ??= requestAnimationFrame(draw);
-}
-function show(t, e, live) {
-  const add = (node, force) => stayPut(t, () => {
-    t.messages.append(node);
-    if (live) animate(node, { opacity: [0, 1] }, { duration: 0.2 });
-  }, force);
-  const speak = () => {
-    const m = { ...ezraMsg(), text: '', drawn: '', raf: null, final: false };
-    m.done = el('div', { className: 'done' });
-    m.tail = el('div', { className: 'tail' });
-    m.body.append(m.done, m.tail);
-    add(m.node);
-    t.steps = null;
-    return (t.last = m);
-  };
-  if (e.kind === 'user') {
-    t.live = null;
-    t.steps = null;
-    t.messages.querySelectorAll('.more').forEach((m) => m.remove());
-    add(el('div', { className: 'msg user' }, e.text), true);
-    setWorking(t, true);
-  } else if (e.kind === 'delta' || e.kind === 'partial') { // a partial is the whole reply so far, for a page that joins mid-reply
-    t.live ??= speak();
-    t.live.text = e.kind === 'partial' ? e.text : t.live.text + e.text;
-    paint(t, t.live);
-  } else if (e.kind === 'text') {
-    const m = t.live ?? speak();
-    Object.assign(m, { text: e.text, final: true });
-    paint(t, m, !live);
-    t.live = null;
-  } else if (e.kind === 'tool') {
-    t.live = null;
-    if (!t.steps) {
-      t.steps = { n: 0, list: el('ol'), sum: el('summary') };
-      add(el('details', { className: 'msg tool' }, t.steps.sum, t.steps.list));
-    }
-    const steps = t.steps;
-    stayPut(t, () => {
-      steps.list.append(el('li', {}, e.text));
-      steps.sum.textContent = `Ezra ${e.text}${++steps.n > 1 ? ` · ${steps.n} steps` : ''}`;
-    });
-  } else if (e.kind === 'done') {
-    t.live = null;
-    t.steps = null;
-    setWorking(t, false);
-    if (!e.ok) add(el('div', { className: 'msg error' }, e.error ? `Stopped: ${e.error}` : 'Stopped.'));
-    else t.last?.body.append(moreMark());
-  }
-}
-
-// ── Ezra, the clerk behind the register. Brandon runs the factory through him; everyone else gets a greeting. ──
+// ── Ezra, the clerk behind the register: he greets whoever walks in, in a speech bubble. ──
 const ezra = $('#ezra');
-const GREETING = {
-  owner: "Hey Brandon, welcome in. What are we making today? Tell me an idea, ask how the factory's doing, or anything else on your mind.",
-  shelf: 'Welcome in! Everything on these shelves was made right here, one file each. Pick up any box to play it, or flip it over for the back.',
-  store: 'Welcome to ForgynGames! Every title here is a single file. Pick up any box to play it, flip it for the back, or take it home with the download tag.',
-};
-// Ezra's own lines type themselves out, like a dialogue box.
+const counter = $('#counter');
+// His wave and talk frames come once the page has settled: unseen until you point at him, they show his idle frame till then.
+settled.then(() => ezra.querySelectorAll('img[data-src]').forEach((img) => { img.src = img.dataset.src; }));
+const GREETING = 'Welcome to ForgynGames! Every title here is a single file. Pick up any box to play it, flip it for the back, or take it home with the download tag.';
+// His line types itself out, like a dialogue box.
 const moreMark = () => el('span', { className: 'more', ariaHidden: 'true' }, '▼');
 function typeOut(node, text) {
   if (calm) { node.textContent = text; node.append(moreMark()); return; }
@@ -1929,98 +1268,49 @@ function typeOut(node, text) {
   };
   requestAnimationFrame(tick); // after the caller has put the node on the page
 }
-// One of Ezra's lines at the top of a panel: typed out the first time he says it, already there after that.
-const spoken = new Set();
-function ezraLine(text) {
-  const p = el('p', { className: 'ezra-line' });
-  if (spoken.has(text)) p.append(text, moreMark());
-  else { spoken.add(text); typeOut(p, text); }
-  return p;
-}
-function renderGuest() {
-  for (const [, panel] of Object.values(TABS)) $(panel).hidden = true;
-  const panel = $('#tab-questions');
-  panel.hidden = false;
+let hiTimer;
+function openCounter() {
   const line = el('p', { className: 'ezra-line' });
   const play = el('button', { type: 'button', className: 'btn primary small', innerHTML: `${icon('play')} Play what's on the TV` });
   play.addEventListener('click', async () => { await closeCounter(); openTV(demoItem(), ezra); });
-  panel.replaceChildren(line, ...(tvItems().length ? [el('div', { className: 'actions' }, play)] : []));
-  typeOut(line, GREETING[store() ? 'store' : 'shelf']);
+  $('#counter-body').replaceChildren(line, ...(tvItems().length ? [el('div', { className: 'actions' }, play)] : []));
+  typeOut(line, GREETING);
+  counter.hidden = false;
+  ezra.classList.add('talking', 'hi'); // a wave hello as the bubble opens, then he talks
+  clearTimeout(hiTimer);
+  hiTimer = setTimeout(() => ezra.classList.remove('hi'), 1200);
+  animate(counter, { opacity: [0, 1], scale: [0.85, 1], y: [20, 0] }, spring(380, 30));
 }
-// He waves with a "!" when something is waiting on Brandon, and looks down at the register while agents work.
-// The dev view's back-room light: green when everything the factory leans on is running and logged in.
-function lampFrom(st) {
-  const lamp = $('#lamp');
-  lamp.hidden = !st;
-  if (!st) return;
-  const days = st.login ? (Date.parse(st.login) - Date.now()) / 86400e3 : 0;
-  const good = st.remote && days > 7;
-  lamp.classList.toggle('warn', !good);
-  lamp.textContent = good ? 'All good' : 'Back room: needs a look';
+async function closeCounter() {
+  ezra.classList.remove('talking', 'hi');
+  await animate(counter, { opacity: [1, 0], scale: [1, 0.9], y: [0, 14] }, { duration: 0.18 });
+  counter.hidden = true;
 }
-$('#lamp').addEventListener('click', () => openCounter('room'));
-function ezraState() {
-  const waiting = hub.allowed ? hub.questions.length : 0;
-  const busy = hub.sessions.some((s) => s.status === 'working');
-  const state = waiting ? 'waiting' : busy ? 'busy' : 'idle';
-  const changed = ezra.dataset.state !== state;
-  ezra.dataset.state = state;
-  if (changed && state !== 'idle') animate($('#ezra-alert'), { scale: [0, 1.25, 1] }, { duration: 0.4 });
-  $('#ezra-alert').textContent = waiting ? '!' : busy ? '…' : '';
-  ezra.setAttribute('aria-label', !hub.allowed ? 'Ezra, the clerk' : waiting ? `Ezra: ${waiting} thing${waiting > 1 ? 's' : ''} waiting on you`
-    : busy ? 'Ezra: working on it' : 'Talk to Ezra');
-}
-ezra.addEventListener('click', () => {
-  if (!counter.hidden) return closeCounter();
-  if (!hub.allowed) return openCounter();
-  if (hub.questions.length) return openCounter('questions');
-  openCounter('talk');
-  if (!thread) factoryThread();
-});
+$('#counter-close').addEventListener('click', closeCounter);
+ezra.addEventListener('click', () => (counter.hidden ? openCounter() : closeCounter()));
 
-// Live restocking: new builds, new questions and conversation updates show up without a refresh.
-const getJSON = (url, fallback) => fetch(url, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : fallback)).catch(() => fallback);
-let lastShelf = '';
-let lastPanel = '';
-// What the open panel shows: it's redrawn only when this changes.
-const panelKey = () => tab + JSON.stringify(tab === 'questions' ? hub.questions
-  : tab === 'room' ? [hub.sessions.map((s) => s.status), [...lineup.values()]]
-  : [hub.sessions.map((s) => [s.id, s.status, sessionTitle(s)]), hub.requests, [...unread]]);
-async function load() {
-  const manifest = await getJSON('manifest.json', { mode: 'shelf', items: [] });
-  const state = manifest.mode === 'store' ? null : await getJSON('api/hub', null);
-  const before = new Map(hub.sessions.map((s) => [s.id, s]));
-  hub = state?.allowed ? state : { allowed: false, sessions: [], questions: [], requests: [] };
-  for (const s of hub.sessions) {
-    const was = before.get(s.id); // finished since the last look, however short the run
-    if (was && s.status === 'idle' && (was.status === 'working' || was.updatedAt !== s.updatedAt) && !(thread?.id === s.id && !counter.hidden)) {
-      unread.add(s.id);
-      // A finished agent never interrupts the conversation you're in: the Talk tab and its row show it instead.
-      if (counter.hidden) toast(s.factory ? 'Done! Tap here to read it.' : `${sessionTitle(s)} is done. Tap here to read it.`, () => { openCounter('talk'); openThread(s); });
-    }
-  }
-  talkTab();
-  const questions = hub.allowed ? hub.questions : manifest.mode === 'store' ? [] : await getJSON('inbox.json', []);
-  if (hub.allowed) lineup = new Map(((await getJSON('api/projects', null))?.projects ?? []).map((p) => [p.name, p]));
-  ezraState();
-  if (hub.allowed) lampFrom(await getJSON('api/status', null));
-  $('#tab-q').textContent = hub.questions.length ? `Your call (${hub.questions.length})` : 'Your call';
-  const shelfKey = JSON.stringify([manifest, questions.map((q) => q.title), [...lineup.values()].map((p) => [p.name, p.step, p.waiting, p.inStore])]);
-  if (shelfKey !== lastShelf) {
-    const first = !lastShelf;
-    lastShelf = shelfKey;
-    data = manifest;
-    inbox = Array.isArray(questions) ? questions : [];
-    updateSign(first);
-    render(first ? 'all' : 'new');
-    tune(Math.min(channel, Math.max(data.items.length - 1, 0)), true);
-    if (first) follow();
-  }
-  const typing = document.activeElement?.matches('textarea, input') && $(TABS[tab][1]).contains(document.activeElement);
-  if (!counter.hidden && !(tab === 'talk' && thread) && !typing && panelKey() !== lastPanel) showTab(tab);
+// Live restocking: a new title shows up without a refresh, read once a minute while the page is in view, and at once when it comes back.
+let retry, stocked = false; // stocked: the catalog has been read once
+async function load(asked = readStock()) {
+  const read = await asked;
+  clearTimeout(retry);
+  if (!read) retry = setTimeout(() => document.hidden || load(), 5000); // a failed read keeps the shelf as it is, and asks again soon
+  if (!read && lastShelf) return;
+  const manifest = read ?? { items: [] };
+  const shelfKey = JSON.stringify(manifest);
+  if (shelfKey === lastShelf) return;
+  const first = !stocked; // a deep link is followed once the catalog is really in, even after a failed first read
+  stocked ||= Boolean(read);
+  lastShelf = shelfKey;
+  data = manifest;
+  updateSign(first);
+  render(first ? 'all' : 'new');
+  tune(Math.min(channel, Math.max(data.items.length - 1, 0)), true);
+  if (first) follow();
 }
-load();
-setInterval(load, 10000);
+load(stock);
+setInterval(() => document.hidden || load(), 60000);
+document.addEventListener('visibilitychange', () => document.hidden || load());
 </script>
 <script>/* privacy-first counts (tools/counts): no cookies, IPs or IDs */(()=>{const u="https://forgyngames-counts.counts.workers.dev",p="store",k='fg-first-'+p,now=Date.now();let f=now;try{f=+localStorage.getItem(k)||now;localStorage.setItem(k,f)}catch{}const d=Math.floor((now-f)/864e5),hit=(e,s=0)=>{try{navigator.sendBeacon(u+'/hit',new Blob([JSON.stringify({p,e,d,s})],{type:'text/plain'}))}catch{}};hit('play');addEventListener('pagehide',()=>hit('leave',Math.round((Date.now()-now)/1e3)),{once:true})})()</script></body>
 </html>
